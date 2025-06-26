@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "keen-slider/keen-slider.min.css";
+
 
 
 
@@ -26,7 +28,12 @@
     --color-whatsapp :#25D366;
   }
 
-
+html, body {
+  height: 100%;
+  margin: 0;
+  scroll-behavior: smooth;
+  overflow: hidden;
+}
 
 
 
