@@ -211,7 +211,7 @@ export default function Home() {
 
 
       {/* Explore Paints & Hardware Side-by-Side */}
-    <section className="py-20 sm:py-24 bg-beige-100 snap-start">
+    <section className="py-20 h-screen sm:py-24 bg-beige-100 snap-start">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <h2 className="text-3xl sm:text-4xl font-serif text-center text-charcoal-800 mb-12 sm:mb-16">
       Try Our Interactive Paint Studio

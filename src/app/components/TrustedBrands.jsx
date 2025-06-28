@@ -16,11 +16,11 @@ export default function TrustedBrands() {
           Trusted by Leading Brands
         </h2>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center justify-center">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center justify-center cursor-pointer">
           {brands.map((brand, idx) => (
             <div
               key={idx}
-              className="flex items-center justify-center hover:scale-105 transition-transform duration-300"
+              className="flex items-center justify-center  transition-transform duration-300"
             >
               <Image
                 src={brand.logo}

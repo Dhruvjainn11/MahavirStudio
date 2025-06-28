@@ -1,39 +1,21 @@
 "use client";
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
 import Image from "next/image";
 
 const products = [
-  {
-    name: "Brushed Brass Handle",
-    price: "₹1,299",
-    image: "/hardware1.jpg",
-  },
-  {
-    name: "Matte Black Knob",
-    price: "₹799",
-    image: "/hardware2.jpg",
-  },
-  {
-    name: "Antique Copper Handle",
-    price: "₹1,499",
-    image: "/hardware3.jpg",
-  },
-  {
-    name: "Polished Chrome Lever",
-    price: "₹1,199",
-    image: "/hardware4.png",
-  },
-  {
-    name: "Satin Nickel Knob",
-    price: "₹899",
-    image: "/hardware5.png",
-  },
+  { name: "Brushed Brass Handle", price: "₹1,299", image: "/hardware1.jpg" },
+  { name: "Matte Black Knob", price: "₹799", image: "/hardware2.jpg" },
+  { name: "Antique Copper Handle", price: "₹1,499", image: "/hardware3.jpg" },
+  { name: "Polished Chrome Lever", price: "₹1,199", image: "/hardware4.png" },
+  { name: "Satin Nickel Knob", price: "₹899", image: "/hardware5.png" },
 ];
 
 export default function FeaturedProducts() {
-  const [sliderRef] = useKeenSlider({
+const timer = useRef(null);
+
+  const [sliderRef, instanceRef] = useKeenSlider({
     loop: true,
     slides: {
       perView: 3,
@@ -41,21 +23,25 @@ export default function FeaturedProducts() {
     },
     breakpoints: {
       "(max-width: 640px)": {
-        slides: { perView: 1.1, spacing: 10 },
+        slides: { perView: 1.2, spacing: 10 },
       },
       "(min-width: 641px) and (max-width: 1024px)": {
         slides: { perView: 2, spacing: 12 },
       },
     },
     created(slider) {
-      setInterval(() => {
-        slider.next();
-      }, 4000); // smoother timing
+      clearInterval(timer.current);
+      timer.current = setInterval(() => {
+        slider.next();  
+      }, 3000); // change every 3 seconds
+    },
+    destroyed() {
+      clearInterval(timer.current);
     },
   });
 
   return (
-    <section className="py-24 bg-beige-50 overflow-hidden h-screen snap-start">
+    <section className="py-24 bg-beige-50 overflow-hidden snap-start min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl md:text-4xl font-serif text-charcoal-800 text-center mb-12">
           Featured Products

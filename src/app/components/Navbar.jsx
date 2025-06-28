@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense, useRef } from "react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { FiShoppingCart, FiHeart, FiSearch, FiMenu, FiX } from "react-icons/fi";
@@ -39,9 +40,11 @@ export default function Navbar() {
               {navLinks.map((link) => (
                 <li key={link.name}>
                   <motion.div whileHover={{ y: -2 }}>
+                     <Suspense fallback={<div>Loading...</div>}>
                     <Link href={link.href} className="nav-link">
                       {link.name}
                     </Link>
+                     </Suspense>
                   </motion.div>
                 </li>
               ))}
