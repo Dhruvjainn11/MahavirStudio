@@ -29,7 +29,7 @@ export default function Home() {
         
         {/* Content Container */}
       
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 h-screen mt-44">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 h-screen mt-44 sm:pt-10">
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -66,7 +66,7 @@ export default function Home() {
         
 
         {/* Scrolling Indicator */}
-        <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}
+        {/* <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}
           animate={{ y: [0, 10, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
           className="absolute bottom-12 left-1/2 transform -translate-x-1/2"
@@ -78,7 +78,7 @@ export default function Home() {
               className="w-1 h-2 bg-charcoal-800 mt-1 rounded-full"
             />
           </div>
-        </motion.div>
+        </motion.div> */}
       </section>
        </FadeInWhenVisible>
 
@@ -211,41 +211,47 @@ export default function Home() {
 
 
       {/* Explore Paints & Hardware Side-by-Side */}
-    <section className="py-20 h-screen sm:py-24 bg-beige-100 snap-start">
+   <section className="py-16 sm:py-20 lg:py-24 bg-beige-100 snap-start">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <h2 className="text-3xl sm:text-4xl font-serif text-center text-charcoal-800 mb-12 sm:mb-16">
+    <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-center text-charcoal-800 mb-10 sm:mb-12 md:mb-16">
       Try Our Interactive Paint Studio
     </h2>
 
     <motion.div
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      className="bg-beige-200 rounded-2xl shadow-lg p-6 sm:p-8 flex flex-col lg:flex-row items-center gap-10"
+      className="bg-beige-200 rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 flex flex-col lg:flex-row items-center lg:items-start gap-8 md:gap-10"
     >
       {/* 3D Model or House Image Preview */}
-      <div className="w-full lg:w-1/2">
-        <HouseModel />
+      <div className="w-full lg:w-1/2 max-w-md sm:max-w-none">
+        <Image
+          src="/models/Home.jpg"
+          alt="House Model Preview"
+          width={600}
+          height={400}  
+          className="rounded-2xl shadow-md"
+          />
       </div>
 
       {/* Text & Buttons */}
       <div className="w-full lg:w-1/2 text-center lg:text-left">
-        <h3 className="text-xl sm:text-2xl md:text-3xl font-serif mb-4 text-charcoal-800">
+        <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-serif mb-4 text-charcoal-800">
           Visualize Your Dream Home
         </h3>
-        <p className="text-charcoal-600 mb-6 text-base sm:text-lg leading-relaxed">
+        <p className="text-charcoal-600 mb-6 text-sm sm:text-base md:text-lg leading-relaxed">
           Experiment with curated palettes, switch between interior and exterior views,
           and preview how colors will look in real environments — all in one immersive tool.
         </p>
-        <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
+        <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3 sm:gap-4">
           <button
             onClick={() => goToStudio("interior")}
-            className="px-6 py-3 rounded-md bg-charcoal-800 text-white font-medium hover:bg-charcoal-700 transition"
+            className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-md bg-charcoal-800 text-white font-medium hover:bg-charcoal-700 transition"
           >
             Interior Mode
           </button>
           <button
             onClick={() => goToStudio("exterior")}
-            className="px-6 py-3 rounded-md border border-charcoal-800 text-charcoal-800 hover:bg-beige-300 transition"
+            className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-md border border-charcoal-800 text-charcoal-800 hover:bg-beige-300 transition"
           >
             Exterior Mode
           </button>
@@ -254,6 +260,7 @@ export default function Home() {
     </motion.div>
   </div>
 </section>
+
 
 
       {/* Featured Products */}

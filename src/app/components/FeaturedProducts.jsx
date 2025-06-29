@@ -1,9 +1,8 @@
 "use client";
-import React, { useRef, useEffect } from "react";
-import { useKeenSlider } from "keen-slider/react";
-import "keen-slider/keen-slider.min.css";
 import Image from "next/image";
+import React from "react";
 
+// Product List
 const products = [
   { name: "Brushed Brass Handle", price: "₹1,299", image: "/hardware1.jpg" },
   { name: "Matte Black Knob", price: "₹799", image: "/hardware2.jpg" },
@@ -13,60 +12,39 @@ const products = [
 ];
 
 export default function FeaturedProducts() {
-const timer = useRef(null);
-
-  const [sliderRef, instanceRef] = useKeenSlider({
-    loop: true,
-    slides: {
-      perView: 3,
-      spacing: 16,
-    },
-    breakpoints: {
-      "(max-width: 640px)": {
-        slides: { perView: 1.2, spacing: 10 },
-      },
-      "(min-width: 641px) and (max-width: 1024px)": {
-        slides: { perView: 2, spacing: 12 },
-      },
-    },
-    created(slider) {
-      clearInterval(timer.current);
-      timer.current = setInterval(() => {
-        slider.next();  
-      }, 3000); // change every 3 seconds
-    },
-    destroyed() {
-      clearInterval(timer.current);
-    },
-  });
+  const scrollingProducts = [...products, ...products]; // For seamless loop
 
   return (
-    <section className="py-24 bg-beige-50 overflow-hidden snap-start min-h-screen">
+    <section className="py-16 sm:py-20 md:py-24 bg-beige-50 overflow-hidden snap-start h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl md:text-4xl font-serif text-charcoal-800 text-center mb-12">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-charcoal-800 text-center mb-10 sm:mb-12">
           Featured Products
         </h2>
 
-        <div ref={sliderRef} className="keen-slider">
-          {products.map((item, index) => (
-            <div
-              key={index}
-              className="keen-slider__slide bg-white border border-beige-200 p-4 rounded-xl shadow-sm flex flex-col items-center text-center transition hover:shadow-md"
-            >
-              <div className="w-full h-48 relative mb-4">
-                <Image
-                  src={item.image}
-                  alt={item.name}
-                  fill
-                  className="rounded-lg object-cover"
-                />
+        <div className="overflow-hidden relative w-full">
+          <div className="flex gap-4 sm:gap-6 md:gap-8 animate-scroll whitespace-nowrap">
+            {scrollingProducts.map((item, index) => (
+              <div
+                key={index}
+                className="min-w-[260px] sm:min-w-[300px] md:min-w-[340px] bg-white border border-beige-200 p-4 rounded-xl shadow-sm flex-shrink-0 flex flex-col items-center text-center hover:shadow-md transition"
+              >
+                <div className="w-full h-40 sm:h-44 md:h-48 relative mb-4">
+                  <Image
+                    src={item.image}
+                    alt={item.name}
+                    fill
+                    className="rounded-lg object-cover"
+                  />
+                </div>
+                <h4 className="text-sm sm:text-base font-semibold text-charcoal-800">
+                  {item.name}
+                </h4>
+                <p className="text-gold-500 font-medium text-sm sm:text-base">
+                  {item.price}
+                </p>
               </div>
-              <h4 className="text-base font-semibold text-charcoal-800">
-                {item.name}
-              </h4>
-              <p className="text-gold-500 font-medium">{item.price}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>

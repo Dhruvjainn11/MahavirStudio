@@ -35,5 +35,18 @@ html, body {
 
 }
 
+@keyframes scroll-x {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll-x 30s linear infinite;
+}
+
 
 
