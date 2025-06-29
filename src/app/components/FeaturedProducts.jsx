@@ -22,7 +22,7 @@ export default function FeaturedProducts() {
         </h2>
 
         <div className="overflow-hidden relative w-full">
-          <div className="flex gap-4 sm:gap-6 md:gap-8 animate-scroll whitespace-nowrap">
+          <div className="flex  gap-4 sm:gap-6 md:gap-8 animate-scroll whitespace-nowrap">
             {scrollingProducts.map((item, index) => (
               <div
                 key={index}
@@ -44,6 +44,7 @@ export default function FeaturedProducts() {
                 </p>
               </div>
             ))}
+            
           </div>
         </div>
       </div>

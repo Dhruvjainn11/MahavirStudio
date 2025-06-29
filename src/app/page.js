@@ -29,7 +29,7 @@ export default function Home() {
         
         {/* Content Container */}
       
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 h-screen mt-44 sm:pt-10">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 h-screen mt-44 sm:pt-20">
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -227,9 +227,9 @@ export default function Home() {
         <Image
           src="/models/Home.jpg"
           alt="House Model Preview"
-          width={600}
-          height={400}  
-          className="rounded-2xl shadow-md"
+          width={380}
+          height={200}  
+          className="rounded-2xl shadow-md mx-auto"
           />
       </div>
 
