@@ -29,7 +29,7 @@ export default function Home() {
         
         {/* Content Container */}
       
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 h-screen mt-44 sm:pt-20">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10  sm:pt-30 md:p-0  h-max"> 
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
