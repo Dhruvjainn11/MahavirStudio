@@ -32,7 +32,7 @@ html, body {
   height: 100%;
   margin: 0;
   scroll-behavior: smooth;
-
+   overflow-x: hidden;
 }
 
 @keyframes scroll-x {
@@ -47,6 +47,16 @@ html, body {
 .animate-scroll {
   animation: scroll-x 30s linear infinite;
 }
+
+/* hide scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 
 
 

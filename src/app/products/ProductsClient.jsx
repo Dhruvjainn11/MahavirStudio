@@ -5,63 +5,26 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { FiShoppingCart, FiHeart, FiFilter } from "react-icons/fi";
 import { useState } from "react";
-
-const products = [
-  {
-    name: "Brushed Brass Handle",
-    price: "₹1,299",
-    category: "hardware",
-    subcategory: "door-handles",
-    finish: "Matte",
-    image: "/hardware1.jpg",
-  },
-  {
-    name: "Matte Black Knob",
-    price: "₹789",
-    category: "hardware",
-    subcategory: "knobs",
-    finish: "Glossy",
-    image: "/hardware2.jpg",
-  },
-  {
-    name: "Royal Blue Paint",
-    price: "₹999",
-    category: "paint",
-    subcategory: "interior",
-    finish: "Matte",
-    image: "/paint1.jpg",
-  },
-  {
-    name: "Warm Grey Paint",
-    price: "₹1,099",
-    category: "paint",
-    subcategory: "exterior",
-    finish: "Metallic",
-    image: "/paint2.jpg",
-  },
-];
+import Link from "next/link";
+import { products } from "../lib/product"; // Ensure this path is correct
 
 export default function ProductsPage() {
-  const searchParams = useSearchParams();
-  const categoryParam = searchParams.get("category");
   const [selectedFinish, setSelectedFinish] = useState("All");
   const [selectedSubcategory, setSelectedSubcategory] = useState("All");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const filtered = products.filter((p) => {
-    const matchCategory = categoryParam ? p.category === categoryParam : true;
-    const matchFinish = selectedFinish === "All" ? true : p.finish === selectedFinish;
-    const matchSub = selectedSubcategory === "All" ? true : p.subcategory === selectedSubcategory;
-    return matchCategory && matchFinish && matchSub;
+    const matchFinish = selectedFinish === "All" || p.finish === selectedFinish;
+    const matchSub = selectedSubcategory === "All" || p.subcategory === selectedSubcategory;
+    return matchFinish && matchSub;
   });
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 mt-12">
+      {/* Page Heading */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl md:text-4xl font-serif text-charcoal-800">
-          {categoryParam
-            ? `${categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1)} Products`
-            : "All Products"}
+          Hardware Products
         </h1>
         <button
           onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
@@ -72,10 +35,16 @@ export default function ProductsPage() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
-        <aside className="w-full md:w-64 md:block">
+        {/* Filters */}
+        <aside
+          className={`w-full md:w-64 ${
+            mobileFiltersOpen ? "block" : "hidden"
+          } md:block`}
+        >
           <div className="bg-white border border-beige-200 p-6 rounded-lg shadow-sm sticky top-24">
             <h3 className="font-serif text-xl mb-6 text-charcoal-800">Filters</h3>
 
+            {/* Finish Filter */}
             <div className="mb-8">
               <p className="text-charcoal-700 font-medium mb-3">Finish</p>
               <div className="space-y-2">
@@ -95,10 +64,11 @@ export default function ProductsPage() {
               </div>
             </div>
 
+            {/* Subcategory Filter */}
             <div className="mb-8">
               <p className="text-charcoal-700 font-medium mb-3">Subcategory</p>
               <div className="space-y-2">
-                {["All", "door-handles", "knobs", "interior", "exterior"].map((sub) => (
+                {["All", "door-handles", "knobs"].map((sub) => (
                   <label key={sub} className="flex items-center capitalize">
                     <input
                       type="radio"
@@ -113,24 +83,10 @@ export default function ProductsPage() {
                 ))}
               </div>
             </div>
-
-            <div>
-              <p className="text-charcoal-700 font-medium mb-3">Price (Coming Soon)</p>
-              <input
-                type="range"
-                min={500}
-                max={2000}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                disabled
-              />
-              <div className="flex justify-between text-sm text-charcoal-500 mt-2">
-                <span>500</span>
-                <span>2000</span>
-              </div>
-            </div>
           </div>
         </aside>
 
+        {/* Products Grid */}
         <div className="flex-1">
           {filtered.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -143,19 +99,26 @@ export default function ProductsPage() {
                   whileHover={{ scale: 1.02 }}
                   className="border border-beige-200 p-5 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col"
                 >
+                   <Link href={`/product/${item.slug}`} key={index}>
                   <div className="relative h-60 w-full mb-4 overflow-hidden rounded-lg">
                     <Image
                       src={item.image}
                       alt={item.name}
                       fill
                       className="object-cover"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   </div>
+                  
                   <div className="flex-grow">
-                    <h3 className="text-lg font-semibold text-charcoal-800 mb-1">{item.name}</h3>
-                    <p className="text-sm text-charcoal-500 mb-2">{item.finish} Finish</p>
-                    <p className="text-gold-600 font-medium text-lg mb-4">{item.price}</p>
+                    <h3 className="text-lg font-semibold text-charcoal-800 mb-1">
+                      {item.name}
+                    </h3>
+                    <p className="text-sm text-charcoal-500 mb-2">
+                      {item.finish} Finish
+                    </p>
+                    <p className="text-gold-600 font-medium text-lg mb-4">
+                      {item.price}
+                    </p>
                   </div>
                   <div className="flex gap-3">
                     <button className="flex-grow flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-charcoal-800 text-white hover:bg-charcoal-700 rounded-md transition-colors">
@@ -165,13 +128,18 @@ export default function ProductsPage() {
                       <FiHeart />
                     </button>
                   </div>
+                  </Link>
                 </motion.div>
               ))}
             </div>
           ) : (
             <div className="text-center py-12">
-              <h3 className="text-xl font-medium text-charcoal-700 mb-2">No products found</h3>
-              <p className="text-charcoal-500">Try adjusting your filters to find what you are looking for.</p>
+              <h3 className="text-xl font-medium text-charcoal-700 mb-2">
+                No products found
+              </h3>
+              <p className="text-charcoal-500">
+                Try adjusting your filters to find what you are looking for.
+              </p>
             </div>
           )}
         </div>

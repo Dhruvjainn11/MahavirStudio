@@ -23,7 +23,7 @@ export default function Home() {
 
       {/* Hero Section */}
         <FadeInWhenVisible>
-      <section className="relative h-screen snap-start flex items-center justify-center bg-beige-50">
+      <section className="relative min-h-screen snap-start flex items-center justify-center bg-beige-50">
         {/* Background Texture */}
         <div className="absolute inset-0 bg-[url('/texture.png')] opacity-10 mix-blend-multiply" />
         
@@ -153,10 +153,18 @@ export default function Home() {
   </section>
 </FadeInWhenVisible>
 
+ {/* Featured Products */}
+      <FadeInWhenVisible>
+      <section className=" bg-beige-100 h-screen snap-start" >
+
+      <FeaturedProducts />
+      </section>
+      </FadeInWhenVisible>
+
 
       {/* Shop by Category */}
       <FadeInWhenVisible>
-  <section className="py-24 bg-beige-50 snap-start">
+  <section className="py-24 bg-beige-100 snap-start">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 className="text-3xl md:text-4xl font-serif text-charcoal-800 text-center mb-12">
         Shop by Category
@@ -211,7 +219,7 @@ export default function Home() {
 
 
       {/* Explore Paints & Hardware Side-by-Side */}
-   <section className="py-16 sm:py-20 lg:py-24 bg-beige-100 snap-start">
+   <section className="py-16 sm:py-20 lg:py-24 bg-beige-50 snap-start">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-center text-charcoal-800 mb-10 sm:mb-12 md:mb-16">
       Try Our Interactive Paint Studio
@@ -263,13 +271,8 @@ export default function Home() {
 
 
 
-      {/* Featured Products */}
-      <FadeInWhenVisible>
-      <section className=" bg-beige-100 h-screen snap-start" >
-
-      <FeaturedProducts />
-      </section>
-      </FadeInWhenVisible>
+      
+     
 
       {/* Trusted brands  */}
    
