@@ -1,0 +1,41 @@
+"use client";
+import { createContext, useContext, useEffect, useState } from "react";
+
+const CartContext = createContext();
+
+export function CartProvider({ children }) {
+  const [cartItems, setCartItems] = useState([]);
+
+  // Load from localStorage initially
+  useEffect(() => {
+    const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
+    setCartItems(storedCart);
+  }, []);
+
+  // Sync with localStorage
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  const addToCart = (product) => {
+    setCartItems((prev) => {
+      const exists = prev.find((item) => item.slug === product.slug);
+      if (exists) return prev; // Avoid duplicate
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  };
+
+  const removeFromCart = (slug) => {
+    setCartItems((prev) => prev.filter((item) => item.slug !== slug));
+  };
+
+  const clearCart = () => setCartItems([]);
+
+  return (
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart }}>
+      {children}
+    </CartContext.Provider>
+  );
+}
+
+export const useCart = () => useContext(CartContext);

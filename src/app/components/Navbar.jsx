@@ -6,10 +6,13 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { FiShoppingCart, FiHeart, FiSearch, FiMenu, FiX } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
+import { useCart } from "../context/cartContext";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  const { cartItems } = useCart();
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -67,9 +70,14 @@ export default function Navbar() {
               </motion.div>
               
               <motion.div whileHover={{ y: -2 }}>
-                <Link href="/cart" className="icon-button">
-                  <FiShoppingCart size={18} />
-                </Link>
+                <Link href="/cart" className="relative text-charcoal-700 hover:text-charcoal-900">
+            <FiShoppingCart size={22} />
+            { cartItems.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-gold-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {cartItems.length}
+              </span>
+            )}
+          </Link>
               </motion.div>
               
               <motion.a 
@@ -149,13 +157,14 @@ export default function Navbar() {
               >
                 <FiHeart size={18} />
               </Link>
-              <Link 
-                href="/cart" 
-                className="icon-button" 
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <FiShoppingCart size={18} />
-              </Link>
+             <Link href="/cart" className="relative text-charcoal-700 hover:text-charcoal-900">
+            <FiShoppingCart size={22} />
+            { cartItems.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-gold-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {cartItems.length}
+              </span>
+            )}
+          </Link>
               <a 
                 href="https://wa.me/yournumber" 
                 target="_blank" 

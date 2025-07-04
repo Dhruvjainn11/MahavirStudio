@@ -2,13 +2,39 @@
 
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import { FiShoppingCart, FiHeart } from "react-icons/fi";
+import React, { useState, useEffect } from "react";
+import { FiShoppingCart, FiHeart } from "react-icons/fi"; 
+import { FaHeart } from "react-icons/fa";
 import Link from "next/link";
 import { products } from "@/app/lib/product"; // adjust this path to match your setup
 
 export default function ProductDetailPage() {
   const { slug } = useParams();
   const product = products.find((p) => p.slug === slug);
+   const [wishlist, setWishlist] = useState([]);
+
+  // Load wishlist from localStorage
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("wishlist")) || [];
+    setWishlist(stored);
+  }, []);
+
+  // Save wishlist to localStorage when updated
+  useEffect(() => {
+    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+  }, [wishlist]);
+
+  const toggleWishlist = () => {
+    if (!product) return;
+    const isWished = wishlist.includes(product.slug);
+    const updated = isWished
+      ? wishlist.filter((id) => id !== product.slug)
+      : [...wishlist, product.slug];
+    setWishlist(updated);
+  };
+
+  const isInWishlist = wishlist.includes(product?.slug);
+
 
   if (!product) {
     return (
@@ -71,8 +97,13 @@ export default function ProductDetailPage() {
             <button className="flex-1 flex items-center justify-center gap-2 px-6 py-3 text-sm sm:text-base bg-charcoal-800 text-white rounded-md hover:bg-charcoal-700 transition">
               <FiShoppingCart /> Add to Cart
             </button>
-            <button className="p-3 bg-beige-100 text-charcoal-800 rounded-md hover:bg-beige-200 transition w-max">
-              <FiHeart />
+            <button  onClick={toggleWishlist}
+              className={`p-3 rounded-md transition ${
+                isInWishlist
+                  ? "bg-gold-100 text-gold-600 hover:bg-gold-200"
+                  : "bg-beige-100 text-charcoal-800 hover:bg-beige-200"
+              }`}>
+              {isInWishlist ? <FaHeart size={20} /> : <FiHeart size={20} />}
             </button>
           </div>
         </div>

@@ -4,18 +4,43 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { FiShoppingCart, FiHeart, FiFilter } from "react-icons/fi";
-import { useState } from "react";
+import { FaHeart } from "react-icons/fa";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { products } from "../lib/product"; // Ensure this path is correct
+import { useCart } from "../context/cartContext"; // Ensure this path is correct
 
 export default function ProductsPage() {
   const [selectedFinish, setSelectedFinish] = useState("All");
   const [selectedSubcategory, setSelectedSubcategory] = useState("All");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [wishlist, setWishlist] = useState([]);
+
+  const { addToCart } = useCart();
+
+  useEffect(() => {
+    const stored = localStorage.getItem("wishlist");
+    if (stored) {
+      setWishlist(JSON.parse(stored));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+  }, [wishlist]);
+
+  const toggleWishlist = (slug) => {
+    setWishlist((prev) =>
+      prev.includes(slug)
+        ? prev.filter((item) => item !== slug)
+        : [...prev, slug]
+    );
+  };
 
   const filtered = products.filter((p) => {
     const matchFinish = selectedFinish === "All" || p.finish === selectedFinish;
-    const matchSub = selectedSubcategory === "All" || p.subcategory === selectedSubcategory;
+    const matchSub =
+      selectedSubcategory === "All" || p.subcategory === selectedSubcategory;
     return matchFinish && matchSub;
   });
 
@@ -42,7 +67,9 @@ export default function ProductsPage() {
           } md:block`}
         >
           <div className="bg-white border border-beige-200 p-6 rounded-lg shadow-sm sticky top-24">
-            <h3 className="font-serif text-xl mb-6 text-charcoal-800">Filters</h3>
+            <h3 className="font-serif text-xl mb-6 text-charcoal-800">
+              Filters
+            </h3>
 
             {/* Finish Filter */}
             <div className="mb-8">
@@ -99,36 +126,51 @@ export default function ProductsPage() {
                   whileHover={{ scale: 1.02 }}
                   className="border border-beige-200 p-5 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col"
                 >
-                   <Link href={`/product/${item.slug}`} key={index}>
-                  <div className="relative h-60 w-full mb-4 overflow-hidden rounded-lg">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
+                  <Link href={`/product/${item.slug}`} key={index}>
+                    <div className="relative h-60 w-full mb-4 overflow-hidden rounded-lg">
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+
+                    <div className="flex-grow">
+                      <h3 className="text-lg font-semibold text-charcoal-800 mb-1">
+                        {item.name}
+                      </h3>
+                      <p className="text-sm text-charcoal-500 mb-2">
+                        {item.finish} Finish
+                      </p>
+                      <p className="text-gold-600 font-medium text-lg mb-4">
+                        {item.price}
+                      </p>
+                    </div>
+                     </Link>
+                    <div className="flex gap-3">
+                      <button
+                       onClick={() => addToCart(item)}
+                      className="flex-grow flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-charcoal-800 text-white hover:bg-charcoal-700 rounded-md transition-colors">
+                        <FiShoppingCart /> Add to Cart
+                      </button>
+                       <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleWishlist(item.slug);
+                      }}
+                      className={`p-2 rounded-md transition-colors h-max ${
+                        wishlist.includes(item.slug)
+                          ? "bg-gold-100 text-gold-600"
+                          : "bg-beige-100 text-charcoal-800 hover:bg-beige-200"
+                      }`}
+                    >
+                      {wishlist.includes(item.slug) ? <FaHeart /> : <FiHeart />}
+                    </button>
+                    </div>
+                
+                   
                   
-                  <div className="flex-grow">
-                    <h3 className="text-lg font-semibold text-charcoal-800 mb-1">
-                      {item.name}
-                    </h3>
-                    <p className="text-sm text-charcoal-500 mb-2">
-                      {item.finish} Finish
-                    </p>
-                    <p className="text-gold-600 font-medium text-lg mb-4">
-                      {item.price}
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <button className="flex-grow flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-charcoal-800 text-white hover:bg-charcoal-700 rounded-md transition-colors">
-                      <FiShoppingCart /> Add to Cart
-                    </button>
-                    <button className="p-2 bg-beige-100 text-charcoal-800 hover:bg-beige-200 rounded-md transition-colors">
-                      <FiHeart />
-                    </button>
-                  </div>
-                  </Link>
                 </motion.div>
               ))}
             </div>
