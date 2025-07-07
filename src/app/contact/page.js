@@ -84,7 +84,7 @@ export default function ContactPage() {
             Get In Touch
           </h1>
           <p className="text-xl text-beige-100 max-w-2xl mx-auto">
-            Ready to transform your space? We'd love to hear from you. Reach out for quotes, consultations, or just to say hello.
+            Ready to transform your space? We&apos;d love to hear from you. Reach out for quotes, consultations, or just to say hello.
           </p>
         </div>
       </motion.section>
@@ -241,7 +241,7 @@ export default function ContactPage() {
                 Contact Information
               </h2>
               <p className="text-charcoal-600 mb-8">
-                Whether you need a quick quote or want to discuss your dream project in detail, we're here to help. Choose the best way to reach us.
+                Whether you need a quick quote or want to discuss your dream project in detail, we&apos;re here to help. Choose the best way to reach us.
               </p>
             </div>
 

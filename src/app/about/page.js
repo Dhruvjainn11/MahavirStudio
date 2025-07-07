@@ -98,7 +98,7 @@ export default function AboutPage() {
                 transition={{ delay: 0.3 }}
                 className="text-xl text-beige-100 mb-8 leading-relaxed"
               >
-                Since 2008, Mahavir Studio has been transforming spaces with premium hardware, curated paints, and designer solutions. We believe every space tells a story, and we're here to help you tell yours.
+                Since 2008, Mahavir Studio has been transforming spaces with premium hardware, curated paints, and designer solutions. We believe every space tells a story, and we&apos;re here to help you tell yours.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
@@ -178,10 +178,10 @@ export default function AboutPage() {
                   Founded in 2008 by Rajesh Mahavir, our journey began with a simple belief: beautiful spaces should be accessible to everyone. What started as a small hardware shop has evolved into a premier destination for premium interior solutions.
                 </p>
                 <p>
-                  Over the years, we've partnered with renowned brands like Asian Paints, Cera, and Jaquar to bring you the finest selection of hardware, paints, and accessories. Our commitment to quality and customer satisfaction has made us a trusted name in the industry.
+                  Over the years, we&apos;ve partnered with renowned brands like Asian Paints, Cera, and Jaquar to bring you the finest selection of hardware, paints, and accessories. Our commitment to quality and customer satisfaction has made us a trusted name in the industry.
                 </p>
                 <p>
-                  Today, we're proud to have transformed over 1000 spaces and built lasting relationships with our customers. Our story continues with every project we complete and every dream we help bring to life.
+                  Today, we&apos;re proud to have transformed over 1000 spaces and built lasting relationships with our customers. Our story continues with every project we complete and every dream we help bring to life.
                 </p>
               </div>
             </motion.div>
@@ -309,7 +309,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl font-serif mb-6">Ready to Transform Your Space?</h2>
           <p className="text-xl text-gold-100 mb-8">
-            Join hundreds of satisfied customers who've trusted us with their dream projects.
+            Join hundreds of satisfied customers who&apos;ve trusted us with their dream projects.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button className="px-8 py-4 bg-white text-gold-600 rounded-lg hover:bg-beige-100 transition-colors font-medium">
