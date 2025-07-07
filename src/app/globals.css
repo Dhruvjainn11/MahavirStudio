@@ -25,6 +25,7 @@
     --color-gold-50 : #fdf9f0;
     --color-gold-100 : #fcefc7;
     --color-gold-500:#c4a86f;
+    --color-gold-600:#b5976a;
     --color-whatsapp :#25D366;
   }
 
@@ -55,6 +56,32 @@ html, body {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Navigation Styles */
+.nav-link {
+  @apply text-charcoal-700 hover:text-gold-500 transition-colors duration-200 font-medium tracking-wide;
+}
+
+.icon-button {
+  @apply text-charcoal-600 hover:text-gold-500 transition-colors duration-200 p-2 rounded-lg hover:bg-beige-100;
+}
+
+.whatsapp-button {
+  @apply bg-whatsapp text-white p-2 rounded-lg hover:bg-green-600 transition-colors duration-200;
+}
+
+/* Button Styles */
+.btn-primary {
+  @apply bg-charcoal-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-charcoal-700 transition-colors duration-200;
+}
+
+.btn-secondary {
+  @apply bg-beige-200 text-charcoal-800 px-6 py-3 rounded-lg font-medium hover:bg-beige-300 transition-colors duration-200;
+}
+
+.btn-gold {
+  @apply bg-gold-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-gold-600 transition-colors duration-200;
 }
 
 

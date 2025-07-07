@@ -125,9 +125,8 @@ export default function Home() {
               <Image
                 src={item.image}
                 alt={item.title}
-                layout="fill"
-                objectFit="cover"
-                className="brightness-75 group-hover:brightness-90 transition-all duration-300"
+                fill
+                className="object-cover brightness-75 group-hover:brightness-90 transition-all duration-300"
               />
 
               {/* Overlay */}
@@ -198,9 +197,8 @@ export default function Home() {
               <Image
                 src={cat.image}
                 alt={cat.title}
-                layout="fill"
-                objectFit="cover"
-                className="transition-opacity"
+                fill
+                className="object-cover transition-opacity"
               />
             </div>
             <div className="py-4 text-center bg-beige-100">
