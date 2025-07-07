@@ -1,5 +1,6 @@
 "use client";
 
+// Fixed ESLint errors and layout issues for Vercel deployment
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
