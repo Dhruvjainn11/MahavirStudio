@@ -71,6 +71,92 @@ html, body {
   @apply bg-whatsapp text-white p-2 rounded-lg hover:bg-green-600 transition-colors duration-200;
 }
 
+/* Responsive Text Utilities */
+.text-responsive-sm {
+  @apply text-sm md:text-base;
+}
+
+.text-responsive-base {
+  @apply text-base md:text-lg;
+}
+
+.text-responsive-lg {
+  @apply text-lg md:text-xl;
+}
+
+.text-responsive-xl {
+  @apply text-xl md:text-2xl;
+}
+
+.text-responsive-2xl {
+  @apply text-2xl md:text-3xl;
+}
+
+.text-responsive-3xl {
+  @apply text-3xl md:text-4xl lg:text-5xl;
+}
+
+/* Spacing Utilities */
+.spacing-responsive-sm {
+  @apply p-3 md:p-4 lg:p-6;
+}
+
+.spacing-responsive-md {
+  @apply p-4 md:p-6 lg:p-8;
+}
+
+.spacing-responsive-lg {
+  @apply p-6 md:p-8 lg:p-12;
+}
+
+/* Card Hover Effects */
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+}
+
+.card-hover-subtle {
+  @apply transition-all duration-200 hover:shadow-md hover:bg-gray-50;
+}
+
+/* Line Clamp Utilities */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* Animation Delays */
+.animate-delay-100 {
+  animation-delay: 0.1s;
+}
+
+.animate-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animate-delay-300 {
+  animation-delay: 0.3s;
+}
+
+.animate-delay-500 {
+  animation-delay: 0.5s;
+}
+
 /* Button Styles */
 .btn-primary {
   @apply bg-charcoal-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-charcoal-700 transition-colors duration-200;

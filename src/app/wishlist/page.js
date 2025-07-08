@@ -1,4 +1,4 @@
-"use client";
+  "use client";
 
 import { useEffect, useState } from "react";
 import { products } from "../lib/product";
@@ -81,8 +81,8 @@ export default function WishlistPage() {
 
   return (
     <>
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-18">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ">
           <div>
             <h1 className="text-3xl sm:text-4xl font-serif text-charcoal-800 mb-2">
               Your Wishlist
@@ -118,7 +118,7 @@ export default function WishlistPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-20"
           >
-            <div className="w-24 h-24 mx-auto mb-6 bg-beige-100 rounded-full flex items-center justify-center">
+            <div className="w-24 h-24 mx-auto bg-beige-100 rounded-full flex items-center justify-center">
               <FiHeart size={32} className="text-beige-400" />
             </div>
             <h2 className="text-2xl font-medium text-charcoal-700 mb-3">

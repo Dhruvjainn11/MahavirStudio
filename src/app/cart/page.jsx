@@ -53,8 +53,8 @@ export default function CartPage() {
   };
 
   return (
-    <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 lg:py-18">
-      <div className="mb-6 md:mb-8">
+    <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 lg:py-26  ">
+      <div className="md:mb-8">
         <Link
           href="/products"
           className="inline-flex items-center text-gold-600 hover:text-gold-700 transition-colors text-sm md:text-base"

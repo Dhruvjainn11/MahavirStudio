@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useCart } from "../context/cartContext";
+import { useAuth } from "../context/authContext";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "../components/Toast";
@@ -153,6 +154,7 @@ function PaymentOption({ id, name, value, checked, onChange, icon, label, descri
 
 export default function CheckoutPage() {
   const { cartItems, clearCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const { success, error } = useToast();
   const router = useRouter();
   
@@ -211,7 +213,20 @@ export default function CheckoutPage() {
     const { name, value } = e.target;
     let formattedValue = value;
     
-    // Format card number
+// Select existing address
+const selectAddress = (address) => {
+  setBillingForm({
+    ...billingForm,
+    firstName: address.fullName,
+    address: address.address,
+    city: address.city,
+    state: address.state,
+    pincode: address.pincode
+  });
+  success("Address selected");
+};
+
+// Format card number
     if (name === "cardNumber") {
       formattedValue = value.replace(/\s/g, "").replace(/(\d{4})(?=\d)/g, "$1 ").trim();
       if (formattedValue.length > 19) return;

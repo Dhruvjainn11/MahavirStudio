@@ -12,6 +12,8 @@ import TrustedBrands from "./components/TrustedBrands";
 import FadeInWhenVisible from "./components/FadeInWhenVisible";
 import { useState, useEffect } from "react";
 
+import RecentlyViewed from "./components/RecentlyViewed";
+
 export default function Home() {
 
    const router = useRouter();
@@ -166,7 +168,9 @@ export default function Home() {
     </div>
   </section>
 </FadeInWhenVisible>
-
+    
+  {/* Recently Viewed */}
+  cRecentlyViewed /e
 
 {/* New Arrivals */}
 <FadeInWhenVisible>
@@ -250,7 +254,7 @@ export default function Home() {
       </div>
       <div className="flex justify-center">
         <Image
-          src="/models/Home-paint.jpg"
+          src="/models/Home.jpg"
           alt="Paint Studio Preview"
           width={480}
           height={300}

@@ -87,21 +87,23 @@ const colorCombinations = {
 };
 
 // 3D Interior Room Component
-function EnhancedInteriorRoom({ wallColor, isDay }) {
-  const meshRefs = {
-    front: useRef(),
-    back: useRef(),
-    left: useRef(),
-    right: useRef(),
-    ceiling: useRef(),
-    floor: useRef()
-  };
-
+function InteriorRoom({ wallColor, isDay, selectedWall, setSelectedWall }) {
   const lightIntensity = isDay ? 1.2 : 0.6;
   const ambientIntensity = isDay ? 0.8 : 0.3;
   
   const handleWallClick = (wallName) => {
     setSelectedWall(wallName);
+  };
+
+  // Convert RGB array to hex color
+  const getWallColor = (isSelected) => {
+    if (isSelected && wallColor) {
+      if (Array.isArray(wallColor)) {
+        return `rgb(${Math.floor(wallColor[0] * 255)}, ${Math.floor(wallColor[1] * 255)}, ${Math.floor(wallColor[2] * 255)})`;
+      }
+      return wallColor;
+    }
+    return '#f0f0f0';
   };
 
   return (
@@ -123,13 +125,12 @@ function EnhancedInteriorRoom({ wallColor, isDay }) {
       {/* Room Walls */}
       {/* Front Wall */}
       <Plane 
-        ref={meshRefs.front}
         args={[8, 6]} 
         position={[0, 0, -4]}
         onClick={() => handleWallClick('front')}
       >
         <meshLambertMaterial 
-          color={selectedWall === 'front' ? wallColor : '#f0f0f0'} 
+          color={getWallColor(selectedWall === 'front')} 
           transparent
           opacity={0.9}
         />
@@ -137,14 +138,13 @@ function EnhancedInteriorRoom({ wallColor, isDay }) {
       
       {/* Back Wall */}
       <Plane 
-        ref={meshRefs.back}
         args={[8, 6]} 
         position={[0, 0, 4]} 
         rotation={[0, Math.PI, 0]}
         onClick={() => handleWallClick('back')}
       >
         <meshLambertMaterial 
-          color={selectedWall === 'back' ? wallColor : '#f0f0f0'} 
+          color={getWallColor(selectedWall === 'back')} 
           transparent
           opacity={0.9}
         />
@@ -152,14 +152,13 @@ function EnhancedInteriorRoom({ wallColor, isDay }) {
       
       {/* Left Wall */}
       <Plane 
-        ref={meshRefs.left}
         args={[8, 6]} 
         position={[-4, 0, 0]} 
         rotation={[0, Math.PI/2, 0]}
         onClick={() => handleWallClick('left')}
       >
         <meshLambertMaterial 
-          color={selectedWall === 'left' ? wallColor : '#f0f0f0'} 
+          color={getWallColor(selectedWall === 'left')} 
           transparent
           opacity={0.9}
         />
@@ -167,14 +166,13 @@ function EnhancedInteriorRoom({ wallColor, isDay }) {
       
       {/* Right Wall */}
       <Plane 
-        ref={meshRefs.right}
         args={[8, 6]} 
         position={[4, 0, 0]} 
         rotation={[0, -Math.PI/2, 0]}
         onClick={() => handleWallClick('right')}
       >
         <meshLambertMaterial 
-          color={selectedWall === 'right' ? wallColor : '#f0f0f0'} 
+          color={getWallColor(selectedWall === 'right')} 
           transparent
           opacity={0.9}
         />
@@ -182,7 +180,6 @@ function EnhancedInteriorRoom({ wallColor, isDay }) {
       
       {/* Floor */}
       <Plane 
-        ref={meshRefs.floor}
         args={[8, 8]} 
         position={[0, -3, 0]} 
         rotation={[-Math.PI/2, 0, 0]}
@@ -192,7 +189,6 @@ function EnhancedInteriorRoom({ wallColor, isDay }) {
       
       {/* Ceiling */}
       <Plane 
-        ref={meshRefs.ceiling}
         args={[8, 8]} 
         position={[0, 3, 0]} 
         rotation={[Math.PI/2, 0, 0]}
@@ -225,9 +221,20 @@ function EnhancedInteriorRoom({ wallColor, isDay }) {
 }
 
 // 3D Exterior House Component
-function EnhancedExteriorHouse({ wallColor, roofColor, isDay }) {
+function ExteriorHouse({ wallColor, roofColor, isDay }) {
   const lightIntensity = isDay ? 1.5 : 0.4;
   const ambientIntensity = isDay ? 1.0 : 0.2;
+  
+  // Convert RGB array to hex color
+  const getHouseColor = () => {
+    if (wallColor) {
+      if (Array.isArray(wallColor)) {
+        return `rgb(${Math.floor(wallColor[0] * 255)}, ${Math.floor(wallColor[1] * 255)}, ${Math.floor(wallColor[2] * 255)})`;
+      }
+      return wallColor;
+    }
+    return '#f0f0f0';
+  };
   
   return (
     <group>
@@ -247,7 +254,7 @@ function EnhancedExteriorHouse({ wallColor, roofColor, isDay }) {
 
       {/* House Base */}
       <Box position={[0, 0, 0]} args={[6, 4, 5]}>
-        <meshLambertMaterial color={wallColor} />
+        <meshLambertMaterial color={getHouseColor()} />
       </Box>
       
       {/* Roof */}
@@ -551,7 +558,72 @@ export default function PaintStudioClient() {
               </p>
             </div>
 
-            {/* Additional Controls */}
+            {/* Color Palette Generator */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">🎨 Color Palette Preview</h3>
+              <div className="grid grid-cols-5 gap-2 mb-4">
+                {paintColors.slice(0, 5).map((color) => (
+                  <button
+                    key={color.name}
+                    onClick={() => setSelectedColor(color)}
+                    style={{ backgroundColor: color.hex }}
+                    className="aspect-square rounded border-2 border-gray-300 hover:border-gold-500 transition-colors"
+                    title={color.name}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-gray-600 mb-3">Quick palette based on current selection</p>
+              
+              {/* Mood-based suggestions */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-800">Suggested Palettes:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['Warm', 'Cool', 'Neutral', 'Bold'].map((mood) => (
+                    <span
+                      key={mood}
+                      className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full"
+                    >
+                      {mood}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Room Preset Themes */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">🏠 Room Preset Themes</h3>
+              <div className="space-y-3">
+                {currentCombinations.map((theme) => (
+                  <div
+                    key={theme.name}
+                    className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                    onClick={() => applyCombination(theme)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 mb-1">{theme.name}</h4>
+                        <p className="text-xs text-gray-600 mb-2">{theme.description}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                            {theme.mood}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        className="text-sm bg-gold-500 text-white px-3 py-1 rounded hover:bg-gold-600 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          applyCombination(theme);
+                        }}
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">3D Controls</h3>
               <div className="space-y-3">

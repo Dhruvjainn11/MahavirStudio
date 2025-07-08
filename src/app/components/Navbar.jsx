@@ -4,15 +4,18 @@ import Link from "next/link";
 import { Suspense, useRef } from "react";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { FiShoppingCart, FiHeart, FiSearch, FiMenu, FiX } from "react-icons/fi";
+import { FiShoppingCart, FiHeart, FiSearch, FiMenu, FiX, FiUser, FiLogOut } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import { useCart } from "../context/cartContext";
+import { useAuth } from "../context/authContext";
 
-export default function Navbar() {
+export default function Navbar({ onLoginClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
   const { cartItems } = useCart();
+  const { user, logout, isAuthenticated } = useAuth();
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -41,7 +44,7 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
             <ul className="flex gap-6">
-              {navLinks.map((link) => (
+{navLinks.map((link) => (
                 <li key={link.name}>
                   <motion.div whileHover={{ y: -2 }}>
                      <Suspense fallback={<div>Loading...</div>}>
@@ -64,8 +67,8 @@ export default function Navbar() {
                 <FiSearch size={18} />
               </motion.button>
               
-              <motion.div whileHover={{ y: -2 }}>
-                <Link href="/wishlist" className="icon-button">
+              <motion.div whileHover={{ y: -2 }} >
+                <Link href="/wishlist" className=" text-charcoal-600 hover:text-gold-500 transition-colors duration-200 p-2 rounded-lg hover:bg-beige-100; ">
                   <FiHeart size={18} />
                 </Link>
               </motion.div>
@@ -80,6 +83,76 @@ export default function Navbar() {
             )}
           </Link>
               </motion.div>
+              
+              {/* User Profile / Login */}
+              {isAuthenticated ? (
+                <div className="relative">
+                  <motion.button
+                    whileHover={{ y: -2 }}
+                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                    className="flex items-center gap-2 p-2 rounded-lg text-charcoal-700 hover:text-gold-500 hover:bg-beige-100 transition-colors duration-200"
+                  >
+                    <FiUser size={18} />
+                    <span className="text-sm font-medium">{user.name.split(' ')[0]}</span>
+                  </motion.button>
+                  
+                  {/* Profile Dropdown */}
+                  {isProfileDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="absolute right-0 top-full mt-2 w-48 bg-white border border-beige-200 rounded-lg shadow-lg z-50"
+                    >
+                      <div className="p-3 border-b border-beige-200">
+                        <p className="text-sm font-medium text-charcoal-800">{user.name}</p>
+                        <p className="text-xs text-charcoal-500">{user.email}</p>
+                      </div>
+                      <div className="py-2">
+                        <Link
+                          href="/profile"
+                          className="block px-3 py-2 text-sm text-charcoal-700 hover:bg-beige-50 hover:text-gold-600"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          My Profile
+                        </Link>
+                        <Link
+                          href="/profile/orders"
+                          className="block px-3 py-2 text-sm text-charcoal-700 hover:bg-beige-50 hover:text-gold-600"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          Order History
+                        </Link>
+                        <Link
+                          href="/profile/addresses"
+                          className="block px-3 py-2 text-sm text-charcoal-700 hover:bg-beige-50 hover:text-gold-600"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          Addresses
+                        </Link>
+                        <button
+                          onClick={() => {
+                            logout();
+                            setIsProfileDropdownOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        >
+                          <FiLogOut size={14} />
+                          Logout
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              ) : (
+                <motion.button
+                  whileHover={{ y: -2 }}
+                  onClick={onLoginClick}
+                  className="flex items-center gap-2 px-4 py-2 bg-gold-500 text-white rounded-lg hover:bg-gold-600 transition-colors duration-200 text-sm font-medium"
+                >
+                  <FiUser size={16} />
+                  Login
+                </motion.button>
+              )}
               
               <motion.a 
                 whileHover={{ scale: 1.1 }}

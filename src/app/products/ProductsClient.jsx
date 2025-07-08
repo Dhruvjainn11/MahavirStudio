@@ -144,7 +144,7 @@ export default function ProductsPage() {
   const filteredProducts = filteredAndSortedProducts();
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 mt-12">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 mt-15">
       {/* Page Heading */}
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-serif text-charcoal-800 mb-4">

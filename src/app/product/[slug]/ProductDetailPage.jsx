@@ -10,6 +10,7 @@ import Link from "next/link";
 import { products } from "@/app/lib/product";
 import { useCart } from "@/app/context/cartContext";
 import { useToast } from "@/app/components/Toast";
+import { useRecentlyViewed } from "@/app/components/RecentlyViewed";
 
 export default function ProductDetailPage() {
   const { slug } = useParams();
@@ -20,6 +21,7 @@ export default function ProductDetailPage() {
   
   const { addToCart } = useCart();
   const toast = useToast();
+  const { addToRecentlyViewed } = useRecentlyViewed();
 
   // Load wishlist from localStorage
   useEffect(() => {
@@ -31,6 +33,13 @@ export default function ProductDetailPage() {
   useEffect(() => {
     localStorage.setItem("wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
+
+  // Add to recently viewed when component mounts
+  useEffect(() => {
+    if (product) {
+      addToRecentlyViewed(product);
+    }
+  }, [product, addToRecentlyViewed]);
 
   const toggleWishlist = () => {
     if (!product) return;
