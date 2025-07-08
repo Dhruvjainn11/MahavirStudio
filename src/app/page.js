@@ -307,8 +307,8 @@ export default function Home() {
     <div className="relative bg-beige-50 py-16 px-8 rounded-lg shadow-lg">
       <FaQuoteLeft size={32} className="text-gold-500 mb-4 absolute left-8 top-8" />
       <p className="text-charcoal-600 text-lg leading-relaxed mb-4">
-        "Absolutely transformed my living space with minimal effort. The products
-        are top-notch and the service unparalleled!"
+        &quot;Absolutely transformed my living space with minimal effort. The products
+        are top-notch and the service unparalleled!&quot;
       </p>
       <p className="text-gold-500 font-medium">- Happy Customer</p>
     </div>
