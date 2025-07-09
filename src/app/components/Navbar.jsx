@@ -59,13 +59,7 @@ export default function Navbar({ onLoginClick }) {
 
             {/* Icons */}
             <div className="flex items-center gap-5 ml-4">
-              <motion.button 
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setSearchOpen(!searchOpen)}
-                className="icon-button"
-              >
-                <FiSearch size={18} />
-              </motion.button>
+              
               
               <motion.div whileHover={{ y: -2 }} >
                 <Link href="/wishlist" className=" text-charcoal-600 hover:text-gold-500 transition-colors duration-200 p-2 rounded-lg hover:bg-beige-100; ">
@@ -168,12 +162,14 @@ export default function Navbar({ onLoginClick }) {
 
           {/* Mobile Hamburger */}
           <div className="lg:hidden flex items-center gap-4">
-            <button 
-              onClick={() => setSearchOpen(!searchOpen)} 
-              className="text-charcoal-600"
-            >
-              <FiSearch size={18} />
-            </button>
+          <Link href="/cart" className="relative text-charcoal-700 hover:text-charcoal-900">
+            <FiShoppingCart size={22} />
+            { cartItems.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-gold-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {cartItems.length}
+              </span>
+            )}
+          </Link>
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)} 
               className="text-charcoal-600 focus:outline-none"
@@ -224,31 +220,47 @@ export default function Navbar({ onLoginClick }) {
               </motion.li>
             ))}
             <div className="flex items-center gap-4 pt-2">
-              <Link 
-                href="/wishlist" 
-                className="icon-button" 
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <FiHeart size={18} />
-              </Link>
-             <Link href="/cart" className="relative text-charcoal-700 hover:text-charcoal-900">
-            <FiShoppingCart size={22} />
-            { cartItems.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-gold-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {cartItems.length}
-              </span>
-            )}
-          </Link>
-              <a 
-                href="https://wa.me/yournumber" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="whatsapp-button"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <FaWhatsapp size={16} />
-              </a>
-            </div>
+  <Link 
+    href="/wishlist" 
+    className="icon-button" 
+    onClick={() => setIsMenuOpen(false)}
+  >
+    <FiHeart size={18} />
+  </Link>
+
+  {isAuthenticated ? (
+    <Link
+      href="/profile"
+      onClick={() => setIsMenuOpen(false)}
+      className="icon-button"
+      title="Profile"
+    >
+      <FiUser size={18} />
+    </Link>
+  ) : (
+    <button
+      onClick={() => {
+        setIsMenuOpen(false);
+        onLoginClick();
+      }}
+      className="icon-button"
+      title="Login"
+    >
+      <FiUser size={18} />
+    </button>
+  )}
+
+  <a 
+    href="https://wa.me/yournumber" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="whatsapp-button"
+    onClick={() => setIsMenuOpen(false)}
+  >
+    <FaWhatsapp size={16} />
+  </a>
+</div>
+
           </ul>
         </motion.div>
       )}

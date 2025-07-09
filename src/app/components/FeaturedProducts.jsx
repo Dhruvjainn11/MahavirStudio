@@ -64,10 +64,10 @@ export default function FeaturedProducts() {
   };
 
   return (
-    <section className="py-16 sm:py-20 md:py-24 bg-beige-50 overflow-hidden">
+    <section className="py-8 sm:py-20 md:py-24 bg-beige-50 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Heading */}
-        <h2 className="text-3xl md:text-4xl font-serif text-charcoal-800 text-center mb-12">
+        <h2 className="text-3xl md:text-4xl font-serif text-charcoal-800 text-center mb-6">
           Featured Products
         </h2>
 
@@ -90,8 +90,8 @@ export default function FeaturedProducts() {
         {/* Carousel */}
         <div
           ref={containerRef}
-          className="flex gap-6 sm:gap-8 md:gap-10 overflow-x-auto scroll-smooth scrollbar-hide px-2"
-        >
+          className="flex gap-4 sm:gap-8 md:gap-10 overflow-x-auto scroll-smooth scrollbar-hide px-2 snap-x snap-mandatory"
+          > 
           {products.slice(0, 6).map((item, index) => (
             <motion.div
               key={item.slug}
@@ -99,9 +99,9 @@ export default function FeaturedProducts() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
               whileHover={{ y: -5 }}
-              className="min-w-[300px] sm:min-w-[360px] md:min-w-[420px] bg-white border border-gold-200 p-6 rounded-2xl shadow-lg flex-shrink-0 flex flex-col items-center text-center hover:shadow-2xl transition-all group"
+              className="min-w-[300px] sm:min-w-[360px] mt-5 md:min-w-[420px] bg-white  border-gold-200 p-3  rounded-2xl shadow-lg flex-shrink-0 flex flex-col items-center text-center hover:shadow-2xl transition-all group  snap-start "
             >
-              <div className="relative w-full h-52 sm:h-64 md:h-80 mb-6 overflow-hidden rounded-xl">
+              <div className="relative w-full h-50  sm:h-64 md:h-60 mb-6 overflow-hidden rounded-xl">
                 <Image
                   src={item.image}
                   alt={item.name}
@@ -109,8 +109,8 @@ export default function FeaturedProducts() {
                   className="object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 
-                {/* Overlay buttons */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
+                {/* Overlay buttons */} 
+                {/* <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -138,7 +138,7 @@ export default function FeaturedProducts() {
                   >
                     <FiHeart size={20} className={wishlist.includes(item.slug) ? 'fill-current' : ''} />
                   </motion.button>
-                </div>
+                </div> */}
                 
                 {/* Badge for in stock / out of stock */}
                 {item.inStock ? (

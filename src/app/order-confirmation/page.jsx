@@ -19,7 +19,7 @@ export default function OrderConfirmation() {
   });
 
   return (
-    <div className="min-h-screen bg-beige-50 py-12">
+    <div className="min-h-screen bg-beige-50 py-24 ">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Success Animation */}
         <div className="text-center mb-8">

@@ -53,7 +53,7 @@ export default function CartPage() {
   };
 
   return (
-    <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 lg:py-26  ">
+    <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-16 lg:py-28  ">
       <div className="md:mb-8">
         <Link
           href="/products"

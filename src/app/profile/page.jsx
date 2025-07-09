@@ -565,7 +565,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-beige-50 py-8">
+    <div className="min-h-screen bg-beige-50 py-15 lg:py-25">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -574,7 +574,7 @@ export default function ProfilePage() {
           className="bg-white rounded-lg shadow-sm border border-beige-200 p-6 mb-8"
         >
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full flex items-center justify-center text-white text-xl font-semibold">
+            <div className="h-12 w-12 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full flex items-center justify-center text-white text-xl font-semibold ">
               {user.name?.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -680,7 +680,7 @@ export default function ProfilePage() {
                       label="Phone Number"
                       value={isEditing ? editedProfile.phone : user.phone}
                       isEditable={isEditing}
-                      onChange={(value) => handleProfileEdit('phone', value)}
+                      onChange={(value) => handleProfileEdit('phone', value)}     
                       icon={<FiPhone size={16} />}
                       error={profileErrors.phone}
                     />
@@ -690,7 +690,7 @@ export default function ProfilePage() {
                         Member Since
                       </label>
                       <div className="w-full px-4 py-3 bg-gray-50 rounded-lg text-charcoal-800 pl-10">
-                        <FiStar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-charcoal-400" size={16} />
+                        
                         January 2024
                       </div>
                     </div>

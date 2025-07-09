@@ -14,10 +14,11 @@ import { useRecentlyViewed } from "@/app/components/RecentlyViewed";
 
 export default function ProductDetailPage() {
   const { slug } = useParams();
-  const product = products.find((p) => p.slug === slug);
+  const [product, setProduct] = useState(null);
   const [wishlist, setWishlist] = useState([]);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
+  const [hasAdded, setHasAdded] = useState(false);
   
   const { addToCart } = useCart();
   const toast = useToast();
@@ -29,17 +30,30 @@ export default function ProductDetailPage() {
     setWishlist(stored);
   }, []);
 
+  // Load product from slug
+  useEffect(() => {
+    if (!slug) return;
+    const found = products.find((p) => p.slug === slug);
+    if (found) {
+      setProduct(found);
+    }
+  }, [slug]);
+
   // Save wishlist to localStorage when updated
   useEffect(() => {
     localStorage.setItem("wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
 
   // Add to recently viewed when component mounts
+
+
   useEffect(() => {
-    if (product) {
+    if (product && !hasAdded) {
       addToRecentlyViewed(product);
+      setHasAdded(true); // ✅ prevents infinite loop
     }
-  }, [product, addToRecentlyViewed]);
+  }, [product, addToRecentlyViewed, hasAdded]);
+  
 
   const toggleWishlist = () => {
     if (!product) return;
@@ -88,7 +102,7 @@ export default function ProductDetailPage() {
     <motion.section 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-7xl mx-auto px-4 sm:px-6 py-20 sm:py-20"
+      className="max-w-7xl mx-auto px-4 sm:px-6 py-20 sm:py-25"
     >
       {/* Back Button & Breadcrumb */}
       <div className="mb-8">
@@ -234,7 +248,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex  sm:flex-row gap-4">
               <button 
                 onClick={handleAddToCart}
                 disabled={!product.inStock}
@@ -245,11 +259,11 @@ export default function ProductDetailPage() {
                 }`}
               >
                 <FiShoppingCart />
-                {product.inStock ? `Add ${selectedQuantity} to Cart` : "Out of Stock"}
+                {product.inStock ? `Add  to Cart` : "Out of Stock"}
               </button>
               <button  
                 onClick={toggleWishlist}
-                className={`p-4 rounded-lg transition-colors ${
+                className={`p-4 rounded-lg transition-colors w-max ${
                   isInWishlist
                     ? "bg-gold-100 text-gold-600 hover:bg-gold-200"
                     : "bg-beige-100 text-charcoal-800 hover:bg-beige-200"
@@ -258,7 +272,7 @@ export default function ProductDetailPage() {
                 {isInWishlist ? <FaHeart size={20} /> : <FiHeart size={20} />}
               </button>
             </div>
-
+ 
             {/* Trust Badges */}
             <div className="grid grid-cols-3 gap-4 pt-6 border-t border-beige-200">
               <div className="text-center">

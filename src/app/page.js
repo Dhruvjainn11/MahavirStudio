@@ -158,11 +158,11 @@ export default function Home() {
 
 {/* Featured Products Slider */}
 <FadeInWhenVisible>
-  <section className="py-24 bg-white snap-start">
+  <section className="py-8 bg-beige-50 snap-start">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 className="font-serif text-4xl md:text-5xl text-charcoal-800 text-center mb-12">
+      {/* <h2 className="font-serif text-4xl md:text-5xl text-charcoal-800 text-center mb-12">
         Featured Products
-      </h2>
+      </h2> */}
 
       <FeaturedProducts />
     </div>
@@ -170,7 +170,7 @@ export default function Home() {
 </FadeInWhenVisible>
     
   {/* Recently Viewed */}
-  cRecentlyViewed /e
+  
 
 {/* New Arrivals */}
 <FadeInWhenVisible>

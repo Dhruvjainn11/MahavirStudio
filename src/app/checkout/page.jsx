@@ -32,7 +32,7 @@ function StepIndicator({ step, currentStep, icon, label, isCompleted }) {
   const isPast = currentStep > step;
   
   return (
-    <div className="flex flex-col items-center min-w-0">
+    <div className="flex flex-col items-center min-w-0 ">
       <div className={`
         w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border-2 transition-all
         ${isActive ? 'bg-gold-500 border-gold-500 text-white' : 
@@ -328,7 +328,7 @@ const selectAddress = (address) => {
   }
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-15">
       {/* Header */}
       <div className="mb-6 md:mb-8">
         <Link
@@ -347,7 +347,7 @@ const selectAddress = (address) => {
       {/* Progress Steps */}
       <div className="mb-6 md:mb-10">
         <div className="flex items-center justify-center overflow-x-auto px-4">
-          <div className="flex items-center space-x-4 md:space-x-8">
+          <div className="flex items-center  md:space-x-8">
             <StepIndicator
               step={1}
               currentStep={currentStep}
@@ -604,7 +604,7 @@ const selectAddress = (address) => {
                 <div className="flex justify-between mt-8">
                   <button
                     onClick={handlePrevStep}
-                    className="px-6 py-3 border border-beige-300 text-charcoal-600 rounded-lg hover:bg-beige-50 transition-colors flex items-center gap-2"
+                    className="px-3 border border-beige-300 text-charcoal-600 rounded-lg hover:bg-beige-50 transition-colors flex items-center gap-2"
                   >
                     <FiChevronLeft size={16} />
                     Back
@@ -616,7 +616,7 @@ const selectAddress = (address) => {
                   >
                     {isLoading ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-full  h-4 w-4 border-b-2 border-white"></div>
                         Processing...
                       </>
                     ) : (
