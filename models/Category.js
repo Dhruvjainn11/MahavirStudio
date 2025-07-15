@@ -10,7 +10,6 @@ const subcategorySchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  image: String,
   isActive: {
     type: Boolean,
     default: true
@@ -32,7 +31,6 @@ const categorySchema = new mongoose.Schema({
     required: true
   },
   description: String,
-  image: String,
   subcategories: [subcategorySchema],
   isActive: {
     type: Boolean,

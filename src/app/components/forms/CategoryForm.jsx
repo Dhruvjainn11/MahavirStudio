@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useModalStore } from '../../store/modalStore';
-import { uploadToCloudinary } from '../../utils/cloudinary';
+
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function CategoryForm() {
@@ -15,16 +15,13 @@ export default function CategoryForm() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    imageUrl: '',
     type: 'hardware'
   });
 
-  const [isUploading, setIsUploading] = useState(false);
-
   useEffect(() => {
     if (isEdit) {
-      const { name, description, imageUrl, type } = modalData.categoryForm;
-      setFormData({ name, description, imageUrl, type });
+      const { name, description, type } = modalData.categoryForm;
+      setFormData({ name, description, type });
     }
   }, [modalData, isEdit]);
 
@@ -53,20 +50,7 @@ export default function CategoryForm() {
     }
   });
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setIsUploading(true);
-    try {
-      const result = await uploadToCloudinary(file);
-      setFormData((prev) => ({ ...prev, imageUrl: result.secure_url }));
-    } catch (err) {
-      console.error(err);
-      alert('Image upload failed');
-    } finally {
-      setIsUploading(false);
-    }
-  };
+
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -128,23 +112,7 @@ if (!isVisible) return null;
             />
           </div>
 
-          <div>
-            <label className="block mb-1 text-sm font-medium">Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="w-full"
-            />
-            {isUploading && <p className="text-sm text-gray-500">Uploading...</p>}
-            {formData.imageUrl && (
-              <img
-                src={formData.imageUrl}
-                alt="Uploaded"
-                className="mt-2 w-32 h-32 object-cover rounded"
-              />
-            )}
-          </div>
+
 
           <div className="flex justify-end space-x-2">
             <button
@@ -156,7 +124,7 @@ if (!isVisible) return null;
             </button>
             <button
               type="submit"
-              disabled={mutation.isLoading || isUploading}
+              disabled={mutation.isLoading}
               className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50"
             >
               {mutation.isLoading ? 'Saving...' : isEdit ? 'Update' : 'Create'}

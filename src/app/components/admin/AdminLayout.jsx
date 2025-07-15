@@ -59,7 +59,7 @@ const AdminLayout = ({ children }) => {
                   key={item.name}
                   href={item.href}
                   className={`${
-                    pathname === item.href
+                    pathname.startsWith(item.href)
                       ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   } group flex items-center px-2 py-2 text-base font-medium rounded-md`}
@@ -96,7 +96,7 @@ const AdminLayout = ({ children }) => {
                   key={item.name}
                   href={item.href}
                   className={`${
-                    pathname === item.href
+                    pathname.startsWith(item.href)
                       ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}

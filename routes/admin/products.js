@@ -533,4 +533,47 @@ router.get('/inventory/low-stock', authenticateUser, authorizeAdmin, async (req,
   }
 });
 
+// Bulk import products
+router.post('/bulk-import', authenticateUser, authorizeAdmin, async (req, res) => {
+  try {
+    const { products } = req.body;
+
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid products data'
+      });
+    }
+
+    // Validate each product
+    const validatedProducts = products.map(product => ({
+      name: product.name,
+      description: product.description,
+      price: Number(product.price),
+      stock: Number(product.stock),
+      type: product.type,
+      categoryId: product.categoryId,
+      brand: product.brand,
+      model: product.model,
+      images: Array.isArray(product.images) ? product.images : [{ url: '', alt: '' }]
+    }));
+
+    // Insert all products
+    const result = await Product.insertMany(validatedProducts, { ordered: false });
+
+    res.status(201).json({
+      success: true,
+      message: `Successfully imported ${result.length} products`,
+      data: result
+    });
+  } catch (error) {
+    console.error('Bulk import error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to import products',
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;

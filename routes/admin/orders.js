@@ -27,70 +27,25 @@ const validateDateRange = [
 // Get all orders with pagination and filters
 router.get('/', authenticateUser, authorizeAdmin, async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 10, 
-      search = '', 
-      status = '',
-      paymentStatus = '',
-      startDate = '',
-      endDate = '',
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-      customerId = ''
-    } = req.query;
+    const { page = 1, limit = 10, search = '', status, paymentStatus } = req.query;
 
     const skip = (page - 1) * limit;
     const query = {};
 
-    // Add search filter (search in customer name, email, order ID)
     if (search) {
-      // First, find users matching the search term
-      const users = await User.find({
-        $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } }
-        ]
-      }).select('_id');
-
       query.$or = [
-        { userId: { $in: users.map(u => u._id) } },
-        { _id: { $regex: search, $options: 'i' } }
+        { 'userId.name': { $regex: search, $options: 'i' } },
+        { 'userId.email': { $regex: search, $options: 'i' } }
       ];
     }
 
-    // Add filters
-    if (status) {
-      query.status = status;
-    }
-
-    if (paymentStatus) {
-      query.paymentStatus = paymentStatus;
-    }
-
-    if (customerId) {
-      query.userId = customerId;
-    }
-
-    // Add date range filter
-    if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate) {
-        query.createdAt.$gte = new Date(startDate);
-      }
-      if (endDate) {
-        query.createdAt.$lte = new Date(endDate);
-      }
-    }
-
-    // Build sort object
-    const sortObj = {};
-    sortObj[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    if (status) query.status = status;
+    if (paymentStatus) query.paymentStatus = paymentStatus;
 
     const [orders, totalOrders] = await Promise.all([
       Order.find(query)
-        .populate('userId', 'name email phone')
-        .sort(sortObj)
+        .populate('userId', 'name email') // only populate needed fields
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit))
         .lean(),
@@ -101,22 +56,19 @@ router.get('/', authenticateUser, authorizeAdmin, async (req, res) => {
       success: true,
       data: {
         orders,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(totalOrders / limit),
-          totalItems: totalOrders,
-          itemsPerPage: parseInt(limit)
-        }
+        totalPages: Math.ceil(totalOrders / limit),
+        currentPage: parseInt(page)
       }
     });
   } catch (error) {
-    console.error('Get orders error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch orders' 
+    console.error('Admin Orders Error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch orders'
     });
   }
 });
+
 
 // Get single order by ID
 router.get('/:id', authenticateUser, authorizeAdmin, async (req, res) => {

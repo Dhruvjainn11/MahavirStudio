@@ -18,10 +18,7 @@ const validateCategory = [
     .optional()
     .isLength({ max: 500 })
     .withMessage('Description must not exceed 500 characters'),
-  body('image')
-    .optional()
-    .isURL()
-    .withMessage('Image must be a valid URL')
+  
 ];
 
 const validateSubcategory = [
@@ -139,7 +136,7 @@ router.post('/', authenticateUser, authorizeAdmin, validateCategory, async (req,
       });
     }
 
-    const { name, type, description, image } = req.body;
+    const { name, type, description } = req.body;
 
     // Check if category already exists
     const existingCategory = await Category.findOne({ name, type });
@@ -154,7 +151,6 @@ router.post('/', authenticateUser, authorizeAdmin, validateCategory, async (req,
       name,
       type,
       description,
-      image,
       subcategories: []
     });
 
@@ -268,7 +264,7 @@ router.post('/:id/subcategories', authenticateUser, authorizeAdmin, validateSubc
       });
     }
 
-    const { name, description, image } = req.body;
+    const { name, type, description } = req.body;
     const categoryId = req.params.id;
 
     const category = await Category.findById(categoryId);
@@ -294,7 +290,6 @@ router.post('/:id/subcategories', authenticateUser, authorizeAdmin, validateSubc
     const subcategory = {
       name,
       description,
-      image,
       isActive: true
     };
 
