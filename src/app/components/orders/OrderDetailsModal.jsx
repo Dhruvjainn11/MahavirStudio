@@ -1,266 +1,383 @@
-'use client';
+"use client";
 
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import useOrderStore from '../../store/orderStore';
-import { useAdmin } from '../../context/adminContext';
+import React, { useState } from "react";
+import { useAdmin } from "@/app/context/adminContext";
+import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FiX,
+  FiTruck,
+  FiCreditCard,
+  FiUser,
+  FiMapPin,
+  FiPackage,
+  FiDollarSign,
+} from "react-icons/fi";
+import { useToast } from "@/app/components/Toast";
 
-const statusOptions = [
-  'pending',
-  'confirmed',
-  'processing',
-  'shipped',
-  'delivered',
-  'cancelled',
-];
-
-const paymentStatusOptions = ['pending', 'paid', 'failed', 'refunded'];
-
-export default function OrderDetailsModal() {
+export default function OrderDetailsModal({
+  orderId,
+  isOpen,
+  onClose,
+  useOrderDetails,
+  refetch,
+}) {
+  const { order, loading, error } = useOrderDetails(orderId);
   const { getAuthHeaders } = useAdmin();
-  const queryClient = useQueryClient();
-  const { showModal, selectedOrder, setShowModal, setSelectedOrder } = useOrderStore();
+  const { success, error: showError } = useToast();
+  const [updating, setUpdating] = useState(false);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
+  const updateStatus = async (field, value) => {
+    setUpdating(true);
+    try {
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders/${orderId}/status`,
+        { [field]: value },
+        { headers: getAuthHeaders() }
+      );
+      success(
+        `${
+          field === "status" ? "Order status" : "Payment status"
+        } updated successfully`
+      );
+      await refetch();
+    } catch (err) {
+      console.error("Update failed:", err);
+      showError(err.response?.data?.message || "Failed to update order");
+    } finally {
+      setUpdating(false);
+    }
   };
 
-  const updateOrderStatusMutation = useMutation({
-    mutationFn: async ({ orderId, newStatus }) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders/${orderId}/status`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders(),
-          },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
-      if (!res.ok) throw new Error('Failed to update order status');
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['admin-orders']);
-    },
-  });
-
-  const updatePaymentStatusMutation = useMutation({
-    mutationFn: async ({ orderId, newStatus }) => {
-      const res = await fetch(
+  const updatePaymentStatus = async (value) => {
+    setUpdating(true);
+    try {
+      await axios.patch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders/${orderId}/payment-status`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders(),
-          },
-          body: JSON.stringify({ paymentStatus: newStatus }),
-        }
+        { paymentStatus: value },
+        { headers: getAuthHeaders() }
       );
-      if (!res.ok) throw new Error('Failed to update payment status');
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['admin-orders']);
-    },
-  });
+      success("Payment status updated successfully");
+      await refetch();
+    } catch (err) {
+      console.error("Payment status update failed:", err);
+      showError(
+        err.response?.data?.message || "Failed to update payment status"
+      );
+    } finally {
+      setUpdating(false);
+    }
+  };
 
-  if (!showModal || !selectedOrder) return null;
+  const statusOptions = [
+    {
+      value: "pending",
+      label: "Pending",
+      color: "bg-yellow-100 text-yellow-800",
+    },
+    {
+      value: "confirmed",
+      label: "Confirmed",
+      color: "bg-blue-100 text-blue-800",
+    },
+    {
+      value: "processing",
+      label: "Processing",
+      color: "bg-purple-100 text-purple-800",
+    },
+    {
+      value: "shipped",
+      label: "Shipped",
+      color: "bg-indigo-100 text-indigo-800",
+    },
+    {
+      value: "delivered",
+      label: "Delivered",
+      color: "bg-green-100 text-green-800",
+    },
+    {
+      value: "cancelled",
+      label: "Cancelled",
+      color: "bg-red-100 text-red-800",
+    },
+  ];
+
+  const paymentOptions = [
+    {
+      value: "pending",
+      label: "Pending",
+      color: "bg-yellow-100 text-yellow-800",
+    },
+    { value: "paid", label: "Paid", color: "bg-green-100 text-green-800" },
+    { value: "failed", label: "Failed", color: "bg-red-100 text-red-800" },
+    {
+      value: "refunded",
+      label: "Refunded",
+      color: "bg-gray-100 text-gray-800",
+    },
+  ];
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-gray-900">
-            Order Details - {selectedOrder?._id?.slice(-8)}
-          </h3>
-          <button
-            onClick={() => {
-              setShowModal(false);
-              setSelectedOrder(null);
-            }}
-            className="text-gray-400 hover:text-gray-600"
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="bg-white w-full max-w-3xl rounded-lg shadow-xl relative max-h-[90vh] flex flex-col"
+            initial={{ scale: 0.95 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0.95 }}
           >
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
-
-        <div className="space-y-6">
-          {/* Order Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Order Information</h4>
-              <div className="space-y-1 text-sm">
-                <p>
-                  <span className="font-medium">Order ID:</span> {selectedOrder._id}
-                </p>
-                <p>
-                  <span className="font-medium">Date:</span>{' '}
-                  {new Date(selectedOrder.createdAt).toLocaleDateString()}
-                </p>
-                <p>
-                  <span className="font-medium">Total:</span>{' '}
-                  {formatCurrency(selectedOrder.totalAmount)}
-                </p>
-                <p>
-                  <span className="font-medium">Payment Method:</span>{' '}
-                  {selectedOrder.paymentMethod}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Customer Information</h4>
-              <div className="space-y-1 text-sm">
-                <p>
-                  <span className="font-medium">Name:</span>{' '}
-                  {selectedOrder.userId?.name || 'N/A'}
-                </p>
-                <p>
-                  <span className="font-medium">Email:</span>{' '}
-                  {selectedOrder.userId?.email || 'N/A'}
-                </p>
-                <p>
-                  <span className="font-medium">Phone:</span>{' '}
-                  {selectedOrder.userId?.phone || 'N/A'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Status Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 ">
-                Order Status
-              </label>
-              <select
-                value={selectedOrder.status}
-                onChange={(e) =>
-                  updateOrderStatusMutation.mutate({
-                    orderId: selectedOrder._id,
-                    newStatus: e.target.value,
-                  })
-                }
-                disabled={updateOrderStatusMutation.isLoading}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            {/* Header */}
+            <div className="border-b p-6 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-800">Order Details</h2>
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
               >
-                {statusOptions.map((status) => (
-                  <option key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </option>
-                ))}
-              </select>
+                <FiX size={24} />
+              </button>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Payment Status
-              </label>
-              <select
-                value={selectedOrder.paymentStatus}
-                onChange={(e) =>
-                  updatePaymentStatusMutation.mutate({
-                    orderId: selectedOrder._id,
-                    newStatus: e.target.value,
-                  })
-                }
-                disabled={updatePaymentStatusMutation.isLoading}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              >
-                {paymentStatusOptions.map((status) => (
-                  <option key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+            {/* Content */}
+            <div className="p-6 overflow-y-auto flex-1">
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              ) : error ? (
+                <div className="bg-red-50 text-red-600 p-4 rounded-md">
+                  {error}
+                </div>
+              ) : order ? (
+                <div className="space-y-6">
+                  {/* Customer Info */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FiUser className="text-gray-600" />
+                      <h3 className="font-semibold text-gray-800">
+                        Customer Information
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Name</p>
+                        <p className="font-medium">
+                          {order.userId?.name || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Email</p>
+                        <p className="font-medium">
+                          {order.userId?.email || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Phone</p>
+                        <p className="font-medium">
+                          {order.userId?.phone || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-          {/* Shipping Address */}
-          {selectedOrder.shippingAddress && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Shipping Address</h4>
-              <div className="text-sm">
-                <p>{selectedOrder.shippingAddress.street}</p>
-                <p>
-                  {selectedOrder.shippingAddress.city},{' '}
-                  {selectedOrder.shippingAddress.state}
-                </p>
-                <p>
-                  {selectedOrder.shippingAddress.zipCode},{' '}
-                  {selectedOrder.shippingAddress.country}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Order Items */}
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Order Items</h4>
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      Product
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      Quantity
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      Price
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {selectedOrder.items?.map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center">
-                          {item.image && (
-                            <img
-                              className="h-8 w-8 rounded object-cover mr-2"
-                              src={item.image}
-                              alt={item.name}
-                            />
+                  {/* Order Summary */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FiDollarSign className="text-gray-600" />
+                      <h3 className="font-semibold text-gray-800">
+                        Order Summary
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Order Date</p>
+                        <p className="font-medium">
+                          {new Date(order.createdAt).toLocaleDateString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
                           )}
-                          <span className="text-sm text-gray-900">{item.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-500">
-                        {item.quantity}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-500">
-                        {formatCurrency(item.price)}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-900">
-                        {formatCurrency(item.price * item.quantity)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Total Amount</p>
+                        <p className="font-medium">
+                          ₹{order.totalAmount.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-          {/* Notes */}
-          {selectedOrder.notes && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Notes</h4>
-              <p className="text-sm text-gray-600">{selectedOrder.notes}</p>
+                  {/* Shipping Address */}
+                  {order.shippingAddress && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FiMapPin className="text-gray-600" />
+                        <h3 className="font-semibold text-gray-800">
+                          Shipping Address
+                        </h3>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="font-medium">
+                          {order.shippingAddress.street}
+                        </p>
+                        <p>
+                          {order.shippingAddress.city},{" "}
+                          {order.shippingAddress.state} -{" "}
+                          {order.shippingAddress.zipCode}
+                        </p>
+                        <p>{order.shippingAddress.country}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Order Items */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FiPackage className="text-gray-600" />
+                      <h3 className="font-semibold text-gray-800">
+                        Order Items ({order.items.length})
+                      </h3>
+                    </div>
+                    <div className="divide-y">
+                      {order.items.map((item) => (
+                        <div
+                          key={item._id}
+                          className="py-3 flex justify-between"
+                        >
+                          <div>
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-sm text-gray-600">
+                              Qty: {item.quantity}
+                            </p>
+                          </div>
+                          <p className="font-medium">₹{item.price}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Status Controls */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <FiTruck className="text-gray-600" />
+                        <h3 className="font-semibold text-gray-800">
+                          Order Status
+                        </h3>
+                      </div>
+                      <select
+                        value={order.status}
+                        onChange={(e) => updateStatus("status", e.target.value)}
+                        disabled={updating}
+                        className={`w-full p-2 border rounded-md ${
+                          updating ? "opacity-70 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        {statusOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="mt-2">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            statusOptions.find((s) => s.value === order.status)
+                              ?.color || "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {statusOptions.find((s) => s.value === order.status)
+                            ?.label || order.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-white border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <FiCreditCard className="text-gray-600" />
+                        <h3 className="font-semibold text-gray-800">
+                          Payment Status
+                        </h3>
+                      </div>
+                      <select
+                        value={order.paymentStatus}
+                        onChange={(e) => updatePaymentStatus(e.target.value)}
+                        disabled={updating}
+                        className={`w-full p-2 border rounded-md ${
+                          updating ? "opacity-70 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        {paymentOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="mt-2">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            paymentOptions.find(
+                              (p) => p.value === order.paymentStatus
+                            )?.color || "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {paymentOptions.find(
+                            (p) => p.value === order.paymentStatus
+                          )?.label || order.paymentStatus}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Notes */}
+                  {order.notes && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-gray-800 mb-2">
+                        Additional Notes
+                      </h3>
+                      <p className="text-gray-700">{order.notes}</p>
+                    </div>
+                  )}
+
+                  {/* Tracking Info */}
+                  {order.trackingNumber && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-gray-800 mb-2">
+                        Tracking Information
+                      </h3>
+                      <p className="text-gray-700">
+                        <span className="font-medium">Tracking Number:</span>{" "}
+                        {order.trackingNumber}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
-          )}
-        </div>
-      </div>
-    </div>
+
+            {/* Footer */}
+            <div className="border-t p-4 flex justify-end">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

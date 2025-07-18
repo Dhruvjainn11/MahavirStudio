@@ -1,18 +1,22 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { loginUser, registerUser, initializeAuth, logoutUser } from "../../../lib/auth";
+import { loginUser, registerUser, initializeAuth, logoutUser ,getToken } from "../../../lib/auth";
 import { useRouter } from "next/navigation";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [address, setAddress] = useState(null)
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+
+
   useEffect(() => {
     initializeAuth();
+   
     const storedUser = localStorage.getItem("mahavir_user");
     if (storedUser) {
       try {
@@ -39,8 +43,12 @@ export function AuthProvider({ children }) {
     setIsLoading(true);
     try {
       const result = await loginUser({ email, password });
+      console.log(result);
+      
       if (result.token) {
         setUser(result.user);
+     
+        
         router.push('/profile');
         return { success: true, user: result.user };
       }
@@ -81,90 +89,191 @@ export function AuthProvider({ children }) {
     router.push('/');
   };
 
-  const updateProfile = async (updates) => {
-    if (!user) return { success: false, error: "Not authenticated" };
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    setIsLoading(false);
-    return { success: true, user: updatedUser };
-  };
+ // lib/auth.js
 
-  const addAddress = async (addressData) => {
-    if (!user) return { success: false, error: "Not authenticated" };
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const newAddress = {
-      id: Date.now(),
-      ...addressData,
-      isDefault: user.addresses ? user.addresses.length === 0 : true
-    };
-    const updatedUser = {
-      ...user,
-      addresses: [...(user.addresses || []), newAddress]
-    };
-    setUser(updatedUser);
-    setIsLoading(false);
-    return { success: true, address: newAddress };
-  };
+const API = process.env.NEXT_PUBLIC_API_URL; // fallback
 
-  const updateAddress = async (addressId, updates) => {
-    if (!user) return { success: false, error: "Not authenticated" };
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const updatedAddresses = (user.addresses || []).map(addr =>
-      addr.id === addressId ? { ...addr, ...updates } : addr
-    );
-    const updatedUser = { ...user, addresses: updatedAddresses };
-    setUser(updatedUser);
-    setIsLoading(false);
-    return { success: true };
-  };
+// ========== Profile ==========
+const updateProfile = async (updates) => {
+    const token = getToken();
+    if (!token) return { success: false, error: 'No token found' };
 
-  const deleteAddress = async (addressId) => {
-    if (!user) return { success: false, error: "Not authenticated" };
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const updatedAddresses = (user.addresses || []).filter(addr => addr.id !== addressId);
-    if (updatedAddresses.length > 0) {
-      const deletedAddress = user.addresses.find(addr => addr.id === addressId);
-      if (deletedAddress?.isDefault) {
-        updatedAddresses[0].isDefault = true;
-      }
+    let userId;
+    try {
+      const userData = JSON.parse(localStorage.getItem('mahavir_user'));
+      console.log(userData);
+      
+      userId = userData._id;
+    } catch (err) {
+      return { success: false, error: 'Failed to retrieve user ID' };
     }
-    const updatedUser = { ...user, addresses: updatedAddresses };
-    setUser(updatedUser);
-    setIsLoading(false);
-    return { success: true };
+
+    try {
+      const res = await fetch(`${API}/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setUser(data.user);
+        localStorage.setItem('mahavir_user', JSON.stringify(data.user));
+        return { success: true, user: data.user };
+      }
+
+      return { success: false, error: data.error || 'Update failed' };
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return { success: false, error: error.message };
+    }
   };
 
-  const setDefaultAddress = async (addressId) => {
-    if (!user) return { success: false, error: "Not authenticated" };
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const updatedAddresses = (user.addresses || []).map(addr => ({
-      ...addr,
-      isDefault: addr.id === addressId
-    }));
-    const updatedUser = { ...user, addresses: updatedAddresses };
-    setUser(updatedUser);
-    setIsLoading(false);
-    return { success: true };
-  };
+// ========== Addresses ==========
 
-  const updatePreferences = async (preferences) => {
-    if (!user) return { success: false, error: "Not authenticated" };
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const updatedUser = {
-      ...user,
-      preferences: { ...(user.preferences || {}), ...preferences }
-    };
-    setUser(updatedUser);
-    setIsLoading(false);
-    return { success: true };
-  };
+ const addAddress = async (data) => {
+  const token = getToken();
+  if (!token) return { success: false, error: 'No token found' };
+    if (!user || !user._id) return { success: false, error: 'User not loaded yet' }; // 👈 Add this
+
+  
+  try {
+    const res = await fetch(`${API}/api/users/${user._id}/addresses`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    
+    const responseData = await res.json();
+    
+    if (res.ok) {
+      // Update the user state with the updated user data
+      setUser(responseData.user);
+      return { success: true, user: responseData.user };
+    }
+    
+    return { success: false, error: responseData.error || 'Failed to add address' };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+ const updateAddress = async (addressId, data) => {
+  const token = getToken();
+  if (!token) return { success: false, error: 'No token found' };
+  
+  try {
+    const res = await fetch(`${API}/api/users/${user._id}/addresses/${addressId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    
+    const responseData = await res.json();
+    
+    if (res.ok) {
+      // Update the user state with the updated user data
+      setUser(responseData.user);
+      return { success: true, user: responseData.user };
+    }
+    
+    return { success: false, error: responseData.error || 'Failed to update address' };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+ const deleteAddress = async (addressId) => {
+  const token = getToken();
+  if (!token) return { success: false, error: 'No token found' };
+  
+  try {
+    const res = await fetch(`${API}/api/users/${user._id}/addresses/${addressId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    
+    const responseData = await res.json();
+    
+    if (res.ok) {
+      // Update the user state with the updated user data
+      setUser(responseData.user);
+      return { success: true, user: responseData.user };
+    }
+    
+    return { success: false, error: responseData.error || 'Failed to delete address' };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+ const setDefaultAddress = async (addressId) => {
+  const token = getToken();
+  if (!token) return { success: false, error: 'No token found' };
+  
+  try {
+    const res = await fetch(`${API}/api/users/${user._id}/addresses/${addressId}/default`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    
+    const responseData = await res.json();
+    
+    if (res.ok) {
+      // Update the user state with the updated user data
+      setUser(responseData.user);
+      return { success: true, user: responseData.user };
+    }
+    
+    return { success: false, error: responseData.error || 'Failed to set default address' };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+// ========== Preferences ==========
+
+ const updatePreferences = async (preferences) => {
+  const token = getToken();
+  if (!token) return { success: false, error: 'No token found' };
+  
+  try {
+    const res = await fetch(`${API}/api/users/${user._id}/preferences`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(preferences),
+    });
+    
+    const responseData = await res.json();
+    
+    if (res.ok) {
+      // Update the user state with the updated user data
+      setUser(responseData.user);
+      return { success: true, user: responseData.user };
+    }
+    
+    return { success: false, error: responseData.error || 'Failed to update preferences' };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
 
   return (
     <AuthContext.Provider value={{

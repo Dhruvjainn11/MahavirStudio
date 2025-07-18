@@ -62,7 +62,7 @@ router.get('/:id', authenticateUser, authorizeUserOrAdmin, async (req, res) => {
 });
 
 // Update user profile
-router.put('/:id', authenticateUser, authorizeUserOrAdmin, async (req, res) => {
+router.put('/:id', authenticateUser, async (req, res) => {
   try {
     const { name, phone, avatar } = req.body;
 
@@ -107,9 +107,11 @@ router.delete('/:id', authenticateUser, authorizeAdmin, async (req, res) => {
 });
 
 // Add address
-router.post('/:id/addresses', authenticateUser, authorizeUserOrAdmin, async (req, res) => {
+router.post('/:id/addresses', authenticateUser,  async (req, res) => {
   try {
-    const { type, street, city, state, zipCode, country, isDefault } = req.body;
+    const { type, address, city, state, pincode, isDefault , phone , fullName} = req.body;
+    console.log(req.body);
+    
 
     const user = await User.findById(req.params.id);
 
@@ -126,11 +128,12 @@ router.post('/:id/addresses', authenticateUser, authorizeUserOrAdmin, async (req
 
     user.addresses.push({
       type,
-      street,
+      address,
       city,
       state,
-      zipCode,
-      country,
+      pincode,
+      phone,
+      fullName,
       isDefault
     });
 
@@ -147,7 +150,7 @@ router.post('/:id/addresses', authenticateUser, authorizeUserOrAdmin, async (req
 });
 
 // Update address
-router.put('/:userId/addresses/:addressId', authenticateUser, authorizeUserOrAdmin, async (req, res) => {
+router.put('/:userId/addresses/:addressId', authenticateUser,  async (req, res) => {
   try {
     const { type, street, city, state, zipCode, country, isDefault } = req.body;
 
@@ -191,7 +194,7 @@ router.put('/:userId/addresses/:addressId', authenticateUser, authorizeUserOrAdm
 });
 
 // Delete address
-router.delete('/:userId/addresses/:addressId', authenticateUser, authorizeUserOrAdmin, async (req, res) => {
+router.delete('/:userId/addresses/:addressId', authenticateUser,  async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
 
@@ -219,7 +222,7 @@ router.delete('/:userId/addresses/:addressId', authenticateUser, authorizeUserOr
 });
 
 // Change password
-router.put('/:id/password', authenticateUser, authorizeUserOrAdmin, async (req, res) => {
+router.put('/:id/password', authenticateUser,  async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 

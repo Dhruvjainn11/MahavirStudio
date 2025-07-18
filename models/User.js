@@ -2,16 +2,18 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const addressSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
   type: {
     type: String,
-    enum: ['home', 'office', 'other'],
+    enum: ['Home', 'Office', 'Other'],
     default: 'home'
   },
-  street: String,
+  address: String,
   city: String,
   state: String,
-  zipCode: String,
-  country: String,
+  pincode: String,
+  phone:String,
+  fullname:String,
   isDefault: {
     type: Boolean,
     default: false

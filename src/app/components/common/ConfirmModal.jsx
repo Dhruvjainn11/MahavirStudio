@@ -20,6 +20,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title = 'Are you sure?', des
             <h3 className="text-lg font-semibold">{title}</h3>
             {description && <p className="text-sm text-gray-600">{description}</p>}
 
+
             <div className="flex justify-end gap-2 pt-4">
               <button
                 onClick={onClose}

@@ -3,6 +3,8 @@ const { body, validationResult } = require('express-validator');
 const Order = require('../../models/Order');
 const User = require('../../models/User');
 const { authenticateUser, authorizeAdmin } = require('../../middleware/auth');
+const generateInvoicePDF = require('../../utils/generateInvoicePDF');
+
 
 const router = express.Router();
 
@@ -23,6 +25,60 @@ const validateDateRange = [
     .isISO8601()
     .withMessage('End date must be a valid ISO8601 date')
 ];
+
+router.get('/test', (req, res) => {
+  res.send('Orders route is working!');
+});
+
+
+// Create a new order (for testing via Postman)
+router.post('/', authenticateUser, authorizeAdmin, async (req, res) => {
+  try {
+    const {
+      userId,
+      items,
+      shippingAddress,
+      totalAmount,
+      status = 'pending',
+      paymentStatus = 'pending',
+      notes = '',
+      trackingNumber = '',
+      estimatedDelivery = null
+    } = req.body;
+
+    if (!userId || !items || items.length === 0 || !shippingAddress || !totalAmount) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: userId, items, shippingAddress, totalAmount',
+      });
+    }
+
+    const order = await Order.create({
+      userId,
+      items,
+      shippingAddress,
+      totalAmount,
+      status,
+      paymentStatus,
+      notes,
+      trackingNumber,
+      estimatedDelivery,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      data: order,
+    });
+  } catch (error) {
+    console.error('Create order error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create order',
+    });
+  }
+});
+
 
 // Get all orders with pagination and filters
 router.get('/', authenticateUser, authorizeAdmin, async (req, res) => {
@@ -460,6 +516,21 @@ router.get('/export/csv', authenticateUser, authorizeAdmin, async (req, res) => 
       success: false, 
       error: 'Failed to export orders' 
     });
+  }
+});
+
+// In your orders route file
+router.get('/:id/invoice', authenticateUser, authorizeAdmin, async (req, res) => {
+  try {
+    // Generate PDF invoice (using pdfkit, puppeteer, or other library)
+    const invoicePDF = await generateInvoicePDF(req.params.id);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice_${req.params.id}.pdf`);
+    invoicePDF.pipe(res);
+  } catch (error) {
+    console.error('Invoice generation error:', error);
+    res.status(500).json({ success: false, error: 'Failed to generate invoice' });
   }
 });
 

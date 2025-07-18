@@ -1,81 +1,86 @@
 'use client';
 
-import { FaUsers, FaBox, FaShoppingCart, FaRupeeSign, FaTags, FaFillDrip } from 'react-icons/fa';
+import { FiUsers, FiPackage, FiShoppingCart, FiDollarSign, FiTag, FiDroplet } from 'react-icons/fi';
 
 const DashboardOverview = ({ overview, thisMonth }) => {
   const cards = [
     {
       label: 'Total Users',
       value: overview.totalUsers,
-      icon: <FaUsers className="text-blue-500 text-2xl" />
+      icon: <FiUsers className="text-blue-500 text-xl" />,
+      trend: thisMonth.userGrowth >= 0 ? 'up' : 'down',
+      trendValue: Math.abs(thisMonth.userGrowth)
     },
     {
       label: 'Total Products',
       value: overview.totalProducts,
-      icon: <FaBox className="text-green-500 text-2xl" />
+      icon: <FiPackage className="text-green-500 text-xl" />,
+      trend: 'neutral'
     },
     {
       label: 'Total Orders',
       value: overview.totalOrders,
-      icon: <FaShoppingCart className="text-purple-500 text-2xl" />
+      icon: <FiShoppingCart className="text-purple-500 text-xl" />,
+      trend: thisMonth.orderGrowth >= 0 ? 'up' : 'down',
+      trendValue: Math.abs(thisMonth.orderGrowth)
     },
     {
       label: 'Total Revenue',
       value: `₹${overview.totalRevenue.toLocaleString()}`,
-      icon: <FaRupeeSign className="text-yellow-500 text-2xl" />
+      icon: <FiDollarSign className="text-yellow-500 text-xl" />,
+      trend: thisMonth.revenueGrowth >= 0 ? 'up' : 'down',
+      trendValue: Math.abs(thisMonth.revenueGrowth)
     },
     {
       label: 'Categories',
       value: overview.totalCategories,
-      icon: <FaTags className="text-pink-500 text-2xl" />
+      icon: <FiTag className="text-pink-500 text-xl" />,
+      trend: 'neutral'
     },
     {
       label: 'Paints',
       value: overview.totalPaints,
-      icon: <FaFillDrip className="text-orange-500 text-2xl" />
+      icon: <FiDroplet className="text-orange-500 text-xl" />,
+      trend: 'neutral'
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {cards.map((card) => (
         <div
           key={card.label}
-          className="bg-white rounded-lg shadow-md p-4 flex items-center justify-between"
+          className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
         >
-          <div>
-            <p className="text-gray-500 text-sm">{card.label}</p>
-            <p className="text-xl font-semibold">{card.value}</p>
+          <div className="flex justify-between">
+            <div>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{card.label}</p>
+              <p className="text-xl font-semibold mt-1">{card.value}</p>
+            </div>
+            <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
+              {card.icon}
+            </div>
           </div>
-          <div>{card.icon}</div>
+          
+          {card.trend !== 'neutral' && (
+            <div className="mt-3 flex items-center text-xs">
+              <span className={`inline-flex items-center ${card.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                {card.trend === 'up' ? (
+                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                )}
+                {card.trendValue}%
+              </span>
+              <span className="text-gray-500 ml-2">vs last month</span>
+            </div>
+          )}
         </div>
       ))}
-
-      {/* This month growth metrics */}
-      <div className="bg-white rounded-lg shadow-md p-4 col-span-1 sm:col-span-2 lg:col-span-3">
-        <div className="flex flex-wrap gap-6 justify-between">
-          <div>
-            <p className="text-gray-500 text-sm">New Users (30d)</p>
-            <p className="text-lg font-medium">
-              {thisMonth.newUsers} 
-              <span className="text-green-600 text-sm ml-2">+{thisMonth.userGrowth}</span>
-            </p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm">New Orders (30d)</p>
-            <p className="text-lg font-medium">
-              {thisMonth.newOrders} 
-              <span className="text-green-600 text-sm ml-2">+{thisMonth.orderGrowth}</span>
-            </p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm">Revenue (30d)</p>
-            <p className="text-lg font-medium text-blue-600">
-              ₹{thisMonth.revenue.toLocaleString()}
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

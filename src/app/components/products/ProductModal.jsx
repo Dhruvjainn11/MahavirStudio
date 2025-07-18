@@ -12,6 +12,11 @@ const ProductModal = ({ isOpen, onClose, initialData = null, refetch }) => {
   const { getAuthHeaders } = useAdmin();
   const { success, error } = useToast();
 
+   const [bulkMode, setBulkMode] = useState(false);
+  const [csvData, setCsvData] = useState([]);
+  const [parsing, setParsing] = useState(false);
+
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -136,6 +141,55 @@ const ProductModal = ({ isOpen, onClose, initialData = null, refetch }) => {
       setLoading(false);
     }
   };
+
+   const handleCSVUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setParsing(true);
+    try {
+      const Papa = (await import('papaparse')).default;
+      Papa.parse(file, {
+        header: true,
+        complete: (results) => {
+          setCsvData(results.data);
+          setBulkMode(true);
+        },
+        error: (error) => {
+          console.error('CSV parsing error:', error);
+          error('Failed to parse CSV file');
+        }
+      });
+    } catch (err) {
+      console.error('CSV upload error:', err);
+      error('CSV upload failed');
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const handleBulkSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/bulk-import`,
+        { products: csvData },
+        { headers: getAuthHeaders() }
+      );
+      success(`${csvData.length} products imported successfully!`);
+      onClose();
+      refetch?.();
+    } catch (err) {
+      console.error('Bulk import error:', err);
+      error(err?.response?.data?.error || 'Failed to import products');
+    } finally {
+      setLoading(false);
+      setBulkMode(false);
+      setCsvData([]);
+    }
+  };
+
 
   return (
     <AnimatePresence>
@@ -322,19 +376,7 @@ const ProductModal = ({ isOpen, onClose, initialData = null, refetch }) => {
                   </label>
                 </div>
 
-                <input
-  type="file"
-  accept=".csv"
-  onChange={handleCSVUpload}
-  className="hidden"
-  ref={fileInputRef}
-/>
-<button
-  onClick={() => fileInputRef.current.click()}
-  className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition text-sm"
->
-  Upload CSV
-</button>
+       
 
 
                 <div className="flex justify-end gap-3 pt-4 border-t">
@@ -361,6 +403,8 @@ const ProductModal = ({ isOpen, onClose, initialData = null, refetch }) => {
                     ) : initialData ? 'Update Product' : 'Create Product'}
                   </button>
                 </div>
+
+                
               </form>
             </div>
           </motion.div>

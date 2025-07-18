@@ -534,37 +534,89 @@ router.get('/inventory/low-stock', authenticateUser, authorizeAdmin, async (req,
 });
 
 // Bulk import products
+// Update your bulk import route to include better validation
 router.post('/bulk-import', authenticateUser, authorizeAdmin, async (req, res) => {
   try {
     const { products } = req.body;
 
-    if (!Array.isArray(products) || products.length === 0) {
+    if (!Array.isArray(products)){
       return res.status(400).json({
         success: false,
-        error: 'Invalid products data'
+        error: 'Products must be an array'
+      });
+    }
+
+    if (products.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No products to import'
+      });
+    }
+
+    if (products.length > 1000) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot import more than 1000 products at once'
       });
     }
 
     // Validate each product
-    const validatedProducts = products.map(product => ({
-      name: product.name,
-      description: product.description,
-      price: Number(product.price),
-      stock: Number(product.stock),
-      type: product.type,
-      categoryId: product.categoryId,
-      brand: product.brand,
-      model: product.model,
-      images: Array.isArray(product.images) ? product.images : [{ url: '', alt: '' }]
-    }));
+    const validatedProducts = [];
+    const errors = [];
 
-    // Insert all products
+    for (const [index, product] of products.entries()) {
+      try {
+        // Basic validation
+        if (!product.name || !product.price || !product.categoryId) {
+          throw new Error('Missing required fields');
+        }
+
+        // Verify category exists
+        const category = await Category.findById(product.categoryId);
+        if (!category) {
+          throw new Error('Category not found');
+        }
+
+        validatedProducts.push({
+          name: product.name,
+          description: product.description || '',
+          price: Number(product.price) || 0,
+          stock: Number(product.stock) || 0,
+          type: ['hardware', 'paint'].includes(product.type) ? product.type : 'hardware',
+          categoryId: product.categoryId,
+          brand: product.brand || '',
+          model: product.model || '',
+          images: Array.isArray(product.images) ? product.images : [],
+          isActive: product.isActive !== undefined ? Boolean(product.isActive) : true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      } catch (err) {
+        errors.push({
+          index,
+          error: err.message,
+          product: product.name || 'Unnamed product'
+        });
+      }
+    }
+
+    if (errors.length > 0 && errors.length === products.length) {
+      return res.status(400).json({
+        success: false,
+        error: 'All products failed validation',
+        details: errors
+      });
+    }
+
+    // Insert valid products
     const result = await Product.insertMany(validatedProducts, { ordered: false });
 
     res.status(201).json({
       success: true,
       message: `Successfully imported ${result.length} products`,
-      data: result
+      importedCount: result.length,
+      errorCount: errors.length,
+      errors: errors.length > 0 ? errors : undefined
     });
   } catch (error) {
     console.error('Bulk import error:', error);
@@ -575,5 +627,4 @@ router.post('/bulk-import', authenticateUser, authorizeAdmin, async (req, res) =
     });
   }
 });
-
 module.exports = router;

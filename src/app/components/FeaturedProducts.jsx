@@ -2,27 +2,25 @@
 import Image from "next/image";
 import React, { useRef } from "react";
 import { FiChevronLeft, FiChevronRight, FiHeart, FiShoppingCart } from "react-icons/fi";
-import { products } from "../lib/product";
+
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useCart } from "../context/cartContext";
 import { useToast } from "./Toast";
 import { useState, useEffect } from "react";
+import { useClientProducts } from "@/app/hooks/useClientProducts";
 
-// const products = [
-//   { name: "Brushed Brass Handle", price: "₹1,299", image: "/hardware1.jpg" },
-//   { name: "Matte Black Knob", price: "₹799", image: "/hardware2.jpg" },
-//   { name: "Antique Copper Handle", price: "₹1,499", image: "/hardware3.jpg" },
-//   { name: "Polished Chrome Lever", price: "₹1,199", image: "/hardware4.png" },
-//   { name: "Satin Nickel Knob", price: "₹899", image: "/hardware5.png" },
-// ];
+
 
 export default function FeaturedProducts() {
   const containerRef = useRef(null);
   const { addToCart } = useCart();
   const toast = useToast();
   const [wishlist, setWishlist] = useState([]);
-  
+
+const { data, isLoading } = useClientProducts();  
+const products = data?.products || [];
+
   useEffect(() => {
     const stored = localStorage.getItem("featured-wishlist");
     if (stored) {
@@ -94,7 +92,7 @@ export default function FeaturedProducts() {
           > 
           {products.slice(0, 6).map((item, index) => (
             <motion.div
-              key={item.slug}
+              key={item}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -103,7 +101,7 @@ export default function FeaturedProducts() {
             >
               <div className="relative w-full h-50  sm:h-64 md:h-60 mb-6 overflow-hidden rounded-xl">
                 <Image
-                  src={item.image}
+                  src={item.images[0].url}
                   alt={item.name}
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -141,7 +139,7 @@ export default function FeaturedProducts() {
                 </div> */}
                 
                 {/* Badge for in stock / out of stock */}
-                {item.inStock ? (
+                {item.stock ? (
                   <div className="absolute top-3 left-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
                     In Stock
                   </div>
@@ -152,7 +150,7 @@ export default function FeaturedProducts() {
                 )}
               </div>
               
-              <Link href={`/product/${item.slug}`} className="w-full">
+              <Link href={`/product/${item.id}`} className="w-full">
                 <div className="space-y-3">
                   <h4 className="text-lg md:text-xl font-semibold text-charcoal-800 group-hover:text-gold-600 transition-colors">
                     {item.name}
@@ -179,7 +177,7 @@ export default function FeaturedProducts() {
                     {item.rating && (
                       <div className="flex items-center gap-1 text-yellow-500">
                         <span className="text-sm">★</span>
-                        <span className="text-sm font-medium text-charcoal-600">{item.rating}</span>
+                        <span className="text-sm font-medium text-charcoal-600">{item.rating.average}</span>
                       </div>
                     )}
                   </div>

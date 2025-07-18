@@ -2,22 +2,25 @@
 
 import React, { useState } from "react";
 import { useProducts } from "@/app/hooks/useProducts";
-import { FaEdit, FaTrash, FaSearch, FaPlus } from "react-icons/fa";
+import { FaEdit, FaTrash, FaSearch, FaPlus , FaFileImport } from "react-icons/fa";
 import ProductModal from "./ProductModal";
+import BulkImportModal from "./BulkImportModal";
 import axios from 'axios';
 import ConfirmModal from "@/app/components/common/ConfirmModal";
 import { useAdmin } from "@/app/context/adminContext";
 import { useToast } from "@/app/components/Toast";
 
 const ProductTable = () => {
-  const [page, setPage] = useState(1);
+    const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [pendingSearch, setPendingSearch] = useState("");
   const [type, setType] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState(null);
+
 
   const { data, isLoading, refetch } = useProducts({
     page,
@@ -70,49 +73,27 @@ const ProductTable = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg shadow-sm">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold text-gray-800">Product Management</h1>
-          <button
-            onClick={() => {
-              setEditingProduct(null);
-              setShowModal(true);
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all flex items-center gap-2 text-sm font-medium shadow-sm"
-          >
-            <FaPlus size={14} />
-            Add Product
-          </button>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <div className="relative flex-grow">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaSearch className="text-gray-400" />
-            </div>
-            <input
-              value={pendingSearch}
-              onChange={(e) => setPendingSearch(e.target.value)}
-              placeholder="Search products..."
-              className="w-full pl-10 pr-4 py-2 border rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            />
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setEditingProduct(null);
+                setShowModal(true);
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all flex items-center gap-2 text-sm font-medium shadow-sm"
+            >
+              <FaPlus size={14} />
+              Add Product
+            </button>
+            <button
+              onClick={() => setShowBulkModal(true)}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all flex items-center gap-2 text-sm font-medium shadow-sm"
+            >
+              <FaFileImport size={14} />
+              Bulk Import
+            </button>
           </div>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="px-4 py-2 border rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">All Types</option>
-            <option value="hardware">Hardware</option>
-            <option value="paint">Paint</option>
-          </select>
-          <button
-            onClick={handleSearch}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all flex items-center gap-2 shadow-sm"
-          >
-            <FaSearch size={14} />
-            Search
-          </button>
         </div>
-      </div>
+        </div>
 
       {/* Table */}
       <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm bg-white">
@@ -255,7 +236,7 @@ const ProductTable = () => {
         </div>
       </div>
 
-      {/* Product Modal */}
+        {/* Product Modal */}
       <ProductModal
         isOpen={showModal}
         onClose={() => {
@@ -264,6 +245,15 @@ const ProductTable = () => {
         }}
         refetch={refetch}
         initialData={editingProduct}
+      />
+
+      {/* Bulk Import Modal */}
+      <BulkImportModal
+        isOpen={showBulkModal}
+        onClose={() => {
+          setShowBulkModal(false);
+        }}
+        refetch={refetch}
       />
 
       <ConfirmModal
