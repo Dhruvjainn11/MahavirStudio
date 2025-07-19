@@ -150,74 +150,128 @@ router.post('/:id/addresses', authenticateUser,  async (req, res) => {
 });
 
 // Update address
-router.put('/:userId/addresses/:addressId', authenticateUser,  async (req, res) => {
+router.put('/:userId/addresses/:addressId', authenticateUser, async (req, res) => {
   try {
-    const { type, street, city, state, zipCode, country, isDefault } = req.body;
+    const { type, address, city, state, pincode, isDefault, fullname, phone } = req.body; // Added phone, changed street to address
 
     const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    const addressToUpdate = user.addresses.id(req.params.addressId);
+    if (!addressToUpdate) return res.status(404).json({ error: 'Address not found' });
 
-    const address = user.addresses.id(req.params.addressId);
-
-    if (!address) {
-      return res.status(404).json({ error: 'Address not found' });
-    }
-
-    // If this is the default address, set all others to false
+    // If setting as default, unset others
     if (isDefault) {
       user.addresses.forEach(addr => {
         addr.isDefault = false;
       });
     }
 
-    address.type = type || address.type;
-    address.street = street || address.street;
-    address.city = city || address.city;
-    address.state = state || address.state;
-    address.zipCode = zipCode || address.zipCode;
-    address.country = country || address.country;
-    address.isDefault = isDefault !== undefined ? isDefault : address.isDefault;
+    // Update fields
+    addressToUpdate.type = type || addressToUpdate.type;
+    addressToUpdate.address = address || addressToUpdate.address; // Changed from street to address
+    addressToUpdate.city = city || addressToUpdate.city;
+    addressToUpdate.state = state || addressToUpdate.state;
+    addressToUpdate.pincode = pincode || addressToUpdate.pincode;
+    addressToUpdate.isDefault = isDefault ?? addressToUpdate.isDefault;
+    addressToUpdate.fullname = fullname || addressToUpdate.fullname;
+    addressToUpdate.phone = phone || addressToUpdate.phone;
 
     await user.save();
 
     res.json({
+      success: true,
       message: 'Address updated successfully',
       user: await User.findById(req.params.userId).select('-password')
     });
+    
   } catch (error) {
     console.error('Update address error:', error);
-    res.status(500).json({ error: 'Server error while updating address' });
+    res.status(500).json({ 
+      success: false,
+      error: error.message || 'Server error while updating address' 
+    });
   }
 });
 
 // Delete address
-router.delete('/:userId/addresses/:addressId', authenticateUser,  async (req, res) => {
+router.delete('/:userId/addresses/:addressId', authenticateUser, async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const { userId, addressId } = req.params;
 
+    // Find user and update in single operation
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { addresses: { _id: addressId } } },
+      { new: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if address was actually removed
+    const addressExists = updatedUser.addresses.some(addr => addr._id.toString() === addressId);
+    if (addressExists) {
+      return res.status(404).json({ error: 'Address not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Address deleted successfully',
+      user: updatedUser
+    });
+
+  } catch (error) {
+    console.error('Delete address error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message || 'Server error while deleting address' 
+    });
+  }
+});
+
+// Set default address
+router.patch('/:userId/addresses/:addressId/default', authenticateUser, async (req, res) => {
+  try {
+    const { userId, addressId } = req.params;
+
+    // 1. Verify the user exists
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const address = user.addresses.id(req.params.addressId);
-
-    if (!address) {
+    // 2. Verify the address exists in user's addresses
+    const addressExists = user.addresses.some(addr => addr._id.toString() === addressId);
+    if (!addressExists) {
       return res.status(404).json({ error: 'Address not found' });
     }
 
-    address.remove();
+    // 3. Reset all addresses' isDefault to false
+    user.addresses.forEach(address => {
+      address.isDefault = false;
+    });
+
+    // 4. Set the specified address as default
+    const addressIndex = user.addresses.findIndex(addr => addr._id.toString() === addressId);
+    user.addresses[addressIndex].isDefault = true;
+
+    // 5. Save the updated user
     await user.save();
 
-    res.json({
-      message: 'Address deleted successfully',
-      user: await User.findById(req.params.userId).select('-password')
+    // 6. Return the updated user
+    res.json({ 
+      success: true, 
+      user: {
+        _id: user._id,
+        addresses: user.addresses
+      }
     });
+
   } catch (error) {
-    console.error('Delete address error:', error);
-    res.status(500).json({ error: 'Server error while deleting address' });
+    console.error('Error setting default address:', error);
+    res.status(500).json({ error: 'Server error while setting default address' });
   }
 });
 

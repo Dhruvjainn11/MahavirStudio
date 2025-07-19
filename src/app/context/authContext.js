@@ -12,6 +12,7 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+// Add this to your auth context to debug
 
 
   useEffect(() => {
@@ -21,6 +22,10 @@ export function AuthProvider({ children }) {
     if (storedUser) {
       try {
         const userParsed = JSON.parse(storedUser);
+        console.log(userParsed);
+         if (!userParsed.addresses) {
+        userParsed.addresses = [];
+      }
         setUser(userParsed);
       } catch (error) {
         console.error("Error parsing stored user:", error);
@@ -39,29 +44,64 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  const login = async (email, password) => {
-    setIsLoading(true);
-    try {
-      const result = await loginUser({ email, password });
-      console.log(result);
-      
-      if (result.token) {
-        setUser(result.user);
-     
-        
-        router.push('/profile');
-        return { success: true, user: result.user };
-      }
-      return { success: false, error: result.error || "Login failed" };
-    } catch (err) {
-      if (err.details) {
-        return { success: false, error: err.details.map(d => d.msg).join(', ') };
-      }
-      return { success: false, error: err.error || "Login error" };
-    } finally {
-      setIsLoading(false);
+const login = async (email, password) => {
+  setIsLoading(true);
+  try {
+    const result = await loginUser({ email, password });
+    
+
+    if (!result?.token) {
+      throw new Error(result?.error || "Login failed");
     }
-  };
+
+    // Store token and user data
+    localStorage.setItem("token", result.token);
+    localStorage.setItem("mahavir_user", JSON.stringify(result.user));
+    
+    // Verify the addresses exist
+    if (!result.user?.addresses) {
+      console.warn("No addresses in login response");
+      result.user.addresses = [];
+    }
+
+    setUser(result.user);
+    router.push('/profile');
+   
+    return { success: true, user: result.user };
+
+  } catch (err) {
+    console.error("Login error:", err);
+    // Clear invalid credentials
+    localStorage.removeItem("token");
+    localStorage.removeItem("mahavir_user");
+    
+    return { 
+      success: false, 
+      error: err.message || "Login failed" 
+    };
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// Helper function (should be defined in same context)
+const fetchUserWithAddresses = async (userId, token) => {
+  const response = await fetch(`${API}/api/users/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include' // If using cookies
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error('API Error:', errorData);
+    throw new Error(errorData.message || "Failed to fetch user data");
+  }
+
+  return await response.json();
+};
 
   const signup = async (userData) => {
     setIsLoading(true);
@@ -177,7 +217,9 @@ const updateProfile = async (updates) => {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(data),
+      
     });
+    console.log(data);
     
     const responseData = await res.json();
     
@@ -193,29 +235,45 @@ const updateProfile = async (updates) => {
   }
 };
 
- const deleteAddress = async (addressId) => {
+const deleteAddress = async (addressId) => {
   const token = getToken();
   if (!token) return { success: false, error: 'No token found' };
   
+  if (!user?._id) return { success: false, error: 'User not loaded' };
+
   try {
     const res = await fetch(`${API}/api/users/${user._id}/addresses/${addressId}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
       },
     });
     
     const responseData = await res.json();
     
-    if (res.ok) {
-      // Update the user state with the updated user data
-      setUser(responseData.user);
-      return { success: true, user: responseData.user };
+    if (!res.ok) {
+      return { 
+        success: false, 
+        error: responseData.error || 'Failed to delete address',
+        details: responseData.message
+      };
     }
+
+    // Update the user state with the updated user data
+    setUser(responseData.user);
+    return { 
+      success: true, 
+      user: responseData.user,
+      message: responseData.message || 'Address deleted successfully'
+    };
     
-    return { success: false, error: responseData.error || 'Failed to delete address' };
   } catch (err) {
-    return { success: false, error: err.message };
+    console.error('Delete address error:', err);
+    return { 
+      success: false, 
+      error: err.message || 'Network error while deleting address' 
+    };
   }
 };
 
@@ -245,31 +303,57 @@ const updateProfile = async (updates) => {
   }
 };
 
-// ========== Preferences ==========
-
- const updatePreferences = async (preferences) => {
+const fetchUserOrders = async (userId, page = 1, limit = 10, status) => {
   const token = getToken();
   if (!token) return { success: false, error: 'No token found' };
-  
+
   try {
-    const res = await fetch(`${API}/api/users/${user._id}/preferences`, {
-      method: "PATCH",
+    let url = `${API}/api/orders/user/${userId}?page=${page}&limit=${limit}`;
+    if (status) url += `&status=${status}`;
+
+    const res = await fetch(url, {
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(preferences),
     });
-    
+
     const responseData = await res.json();
-    
+    console.log(responseData);
+
     if (res.ok) {
-      // Update the user state with the updated user data
-      setUser(responseData.user);
-      return { success: true, user: responseData.user };
+      return { 
+        success: true, 
+        orders: responseData.orders, 
+        pagination: responseData.pagination 
+      };
     }
-    
-    return { success: false, error: responseData.error || 'Failed to update preferences' };
+
+    return { success: false, error: responseData.error || 'Failed to fetch orders' };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+const cancelOrder = async (orderId) => {
+  const token = getToken();
+  if (!token) return { success: false, error: 'No token found' };
+
+  try {
+    const res = await fetch(`${API}/api/orders/${orderId}/cancel`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const responseData = await res.json();
+
+    if (res.ok) {
+      return { success: true, order: responseData.order };
+    }
+
+    return { success: false, error: responseData.error || 'Failed to cancel order' };
   } catch (err) {
     return { success: false, error: err.message };
   }
@@ -288,7 +372,8 @@ const updateProfile = async (updates) => {
       updateAddress,
       deleteAddress,
       setDefaultAddress,
-      updatePreferences
+      fetchUserOrders,
+      cancelOrder
     }}>
       {children}
     </AuthContext.Provider>

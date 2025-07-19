@@ -66,28 +66,26 @@ router.post('/login', authLimiter, validateUserLogin, async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user and include password for comparison
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email })
+      .select('+password')
+      .populate('addresses'); // Add this to include addresses
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Check if account is active
     if (!user.isActive) {
       return res.status(401).json({ error: 'Account is deactivated' });
     }
 
-    // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Update last login
     user.lastLogin = new Date();
     await user.save();
 
-    // Generate token
     const token = generateToken(user._id);
 
     res.json({
@@ -97,10 +95,12 @@ router.post('/login', authLimiter, validateUserLogin, async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        isAdmin: user.isAdmin
+        isAdmin: user.isAdmin,
+        addresses: user.addresses // Include addresses in response
       },
       token
     });
+
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Server error during login' });

@@ -17,6 +17,8 @@ export default function Navbar({ onLoginClick }) {
   const { cartItems } = useCart();
   const { user, logout, isAuthenticated } = useAuth();
 
+  const firstName = user?.name?.split(' ')[0] || 'User';
+
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Products", href: "/products" },
@@ -87,7 +89,7 @@ export default function Navbar({ onLoginClick }) {
                     className="flex items-center gap-2 p-2 rounded-lg text-charcoal-700 hover:text-gold-500 hover:bg-beige-100 transition-colors duration-200"
                   >
                     <FiUser size={18} />
-                    <span className="text-sm font-medium">{user.name.split(' ')[0]}</span>
+                    <span className="text-sm font-medium">{firstName}</span>
                   </motion.button>
                   
                   {/* Profile Dropdown */}

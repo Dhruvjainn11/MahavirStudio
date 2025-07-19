@@ -4,30 +4,34 @@ const User = require('../models/User');
 // Middleware to authenticate user
 const authenticateUser = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const authHeader = req.headers.authorization;
     
-    if (!token) {
-      return res.status(401).json({ error: 'Access denied. No token provided.' });
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
+    const token = authHeader.split(' ')[1].trim();
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select('-password');
     
+    // Verify user still exists
+    const user = await User.findById(decoded.userId);
     if (!user) {
-      return res.status(401).json({ error: 'Invalid token.' });
-    }
-
-    if (!user.isActive) {
-      return res.status(401).json({ error: 'Account is deactivated.' });
+      return res.status(401).json({ error: 'User no longer exists' });
     }
 
     req.user = user;
     next();
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid token.' });
+  } catch (err) {
+    console.error('Authentication error:', err);
+    
+    if (err.name === 'TokenExpiredError') {
+      return res.status(403).json({ error: 'Token expired' });
+    }
+    
+    return res.status(403).json({ error: 'Invalid token' });
   }
 };
-
 // Middleware to authorize admin
 const authorizeAdmin = (req, res, next) => {
   if (!req.user.isAdmin) {

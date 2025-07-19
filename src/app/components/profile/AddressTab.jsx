@@ -8,26 +8,62 @@ import AddressCard from "./AddressCard.jsx";
 import AddressFormModal from "./AddressFormModal.jsx";
 
 export default function AddressTab() {
-  const { user, setUser } = useAuth();
+  const { user, addAddress, updateAddress, deleteAddress, setDefaultAddress } = useAuth();
   const toast = useToast();
   const [modalOpen, setModalOpen] = useState(false);
-  const [editAddressIndex, setEditAddressIndex] = useState(null);
+  const [editAddressId, setEditAddressId] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleDeleteAddress = (index) => {
-    const updatedAddresses = [...user.addresses];
-    updatedAddresses.splice(index, 1);
-    setUser((prev) => ({ ...prev, addresses: updatedAddresses }));
-    toast.success("Address removed");
+  const handleDeleteAddress = async (addressId) => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteAddress(addressId);
+      if (result.success) {
+        toast.success("Address removed");
+      } else {
+        toast.error(result.error || "Failed to delete address");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+      console.error(error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-  const handleEditClick = (index) => {
-    setEditAddressIndex(index);
+  const handleEditClick = (addressId) => {
+    setEditAddressId(addressId);
     setModalOpen(true);
   };
 
   const handleAddClick = () => {
-    setEditAddressIndex(null);
+    setEditAddressId(null);
     setModalOpen(true);
+  };
+
+  const handleSaveAddress = async (addressData) => {
+    setIsSaving(true);
+    try {
+      let result;
+      if (editAddressId) {
+        result = await updateAddress(editAddressId, addressData);
+      } else {
+        result = await addAddress(addressData);
+      }
+
+      if (result.success) {
+        toast.success(`Address ${editAddressId ? 'updated' : 'added'} successfully`);
+        setModalOpen(false);
+      } else {
+        toast.error(result.error || `Failed to ${editAddressId ? 'update' : 'add'} address`);
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -43,39 +79,35 @@ export default function AddressTab() {
         </button>
       </div>
 
-      {user.addresses?.length === 0 ? (
+      {user?.addresses?.length === 0 ? (
         <div className="bg-gray-50 rounded-lg p-6 text-center">
           <p className="text-gray-500">No saved addresses yet</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {user.addresses?.map((address, index) => (
+          {user?.addresses?.map((address) => (
             <AddressCard
-              key={index}
+              key={address._id}
               address={address}
-              onEdit={() => handleEditClick(index)}
-              onDelete={() => handleDeleteAddress(index)}
+              onEdit={() => handleEditClick(address._id)}
+              onDelete={() => handleDeleteAddress(address._id)}
+              onSetDefault={() => setDefaultAddress(address._id)}
+              isDeleting={isDeleting}
             />
           ))}
         </div>
       )}
-{console.log('AddressFormModal:', AddressFormModal)}
+
       <AddressFormModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        editAddress={editAddressIndex !== null ? user.addresses[editAddressIndex] : null}
-        onSave={(newAddress) => {
-          const updatedAddresses = [...user.addresses];
-          if (editAddressIndex !== null) {
-            updatedAddresses[editAddressIndex] = newAddress;
-            toast.success("Address updated");
-          } else {
-            updatedAddresses.push(newAddress);
-            toast.success("Address added");
-          }
-          setUser((prev) => ({ ...prev, addresses: updatedAddresses }));
-          setModalOpen(false);
-        }}
+        editAddress={
+          editAddressId && user?.addresses
+            ? user.addresses.find(addr => addr._id.toString() === editAddressId.toString())
+            : null
+        }
+        onSave={handleSaveAddress}
+        isSaving={isSaving}
       />
     </div>
   );

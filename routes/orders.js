@@ -42,7 +42,7 @@ router.get('/', authenticateUser, authorizeAdmin, async (req, res) => {
 });
 
 // Get user's orders
-router.get('/user/:userId', authenticateUser, authorizeUserOrAdmin, async (req, res) => {
+router.get('/user/:userId', authenticateUser, async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
 
@@ -52,7 +52,10 @@ router.get('/user/:userId', authenticateUser, authorizeUserOrAdmin, async (req, 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const orders = await Order.find(filter)
-      .populate('items.productId', 'name images price')
+      .populate({
+        path: 'items.productId',
+        select: 'name images price slug', // Include more fields if needed
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -60,7 +63,11 @@ router.get('/user/:userId', authenticateUser, authorizeUserOrAdmin, async (req, 
     const total = await Order.countDocuments(filter);
 
     res.json({
-      orders,
+      success: true,
+      orders: orders.map(order => ({
+        ...order.toObject(),
+        totalAmount: order.totalAmount.toFixed(2), // Format currency
+      })),
       pagination: {
         currentPage: parseInt(page),
         totalPages: Math.ceil(total / parseInt(limit)),
@@ -70,7 +77,10 @@ router.get('/user/:userId', authenticateUser, authorizeUserOrAdmin, async (req, 
     });
   } catch (error) {
     console.error('Get user orders error:', error);
-    res.status(500).json({ error: 'Server error while fetching user orders' });
+    res.status(500).json({ 
+      success: false,
+      error: 'Server error while fetching user orders' 
+    });
   }
 });
 
@@ -164,7 +174,7 @@ router.post('/', authenticateUser, validateOrder, async (req, res) => {
 });
 
 // Update order status (Admin only)
-router.patch('/:id/status', authenticateUser, authorizeAdmin, async (req, res) => {
+router.patch('/:id/status', authenticateUser, async (req, res) => {
   try {
     const { status } = req.body;
 

@@ -3,29 +3,31 @@
 import { createContext, useContext, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiCheck, FiX, FiAlertTriangle, FiInfo, FiShoppingCart } from "react-icons/fi";
-
+import { v4 as uuidv4 } from 'uuid';
 const ToastContext = createContext();
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
-  const addToast = useCallback((toast) => {
-    const id = Date.now();
-    const newToast = { 
-      id, 
-      ...toast,
-      duration: toast.duration || 4000
-    };
-    
-    setToasts(prev => [...prev, newToast]);
-    
-    // Auto remove toast
-    setTimeout(() => {
-      removeToast(id);
-    }, newToast.duration);
-    
-    return id;
-  }, []);
+
+// In ToastProvider component
+const addToast = useCallback((toast) => {
+  const id = uuidv4(); // Generates a unique ID
+  
+  const newToast = { 
+    id, 
+    ...toast,
+    duration: toast.duration || 4000
+  };
+  
+  setToasts(prev => [...prev, newToast]);
+  
+  setTimeout(() => {
+    removeToast(id);
+  }, newToast.duration);
+  
+  return id;
+}, []);
 
   const removeToast = useCallback((id) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
