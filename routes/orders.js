@@ -1,6 +1,7 @@
 const express = require('express');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const mongoose = require('mongoose');
 const { authenticateUser, authorizeAdmin, authorizeUserOrAdmin } = require('../middleware/auth');
 const { validateOrder } = require('../middleware/validation');
 
@@ -84,93 +85,140 @@ router.get('/user/:userId', authenticateUser, async (req, res) => {
   }
 });
 
-// Get single order by ID
-router.get('/:id', authenticateUser, async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id)
-      .populate('userId', 'name email')
-      .populate('items.productId', 'name images price');
-
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
-    // Check if user owns this order or is admin
-    if (req.user.isAdmin || req.user._id.toString() === order.userId.toString()) {
-      res.json(order);
-    } else {
-      res.status(403).json({ error: 'Access denied' });
-    }
-  } catch (error) {
-    console.error('Get order error:', error);
-    res.status(500).json({ error: 'Server error while fetching order' });
-  }
-});
 
 // Create new order
-router.post('/', authenticateUser, validateOrder, async (req, res) => {
-  try {
-    const { items, paymentMethod, billingDetails, shippingAddress } = req.body;
+// At the top of your router.post route, after destructuring req.body
+router.post('/', authenticateUser , validateOrder, async (req, res) => {
+    // Destructure all relevant fields from req.body
+    const { billingDetails, paymentMethod, paymentInfo, items: incomingItems, totalAmount, subtotal, shippingCost, taxAmount, discountAmount, shippingDetails } = req.body;
 
-    // Validate products and calculate total
-    let totalAmount = 0;
-    const orderItems = [];
+    console.log(req.body);
+    console.log("--- Debugging Order Placement ---");
+    console.log("Incoming billingDetails:", billingDetails);
+    console.log("Incoming shippingDetails (if any):", shippingDetails);
+    // ... rest of your initial logs
 
-    for (const item of items) {
-      const product = await Product.findById(item.productId);
-      
-      if (!product || !product.isActive) {
-        return res.status(400).json({ error: `Product ${item.productId} not found` });
-      }
+    try {
+        // --- RESTORE THIS BLOCK: Product stock check and orderItems array building ---
+        let orderItems = []; // <-- Make sure this line exists!
+        for (let item of incomingItems) {
+            const product = await Product.findById(item._id);
+            if (!product) {
+                return res.status(404).json({ message: `Product not found: ${item._id}` });
+            }
+            if (product.stock < item.quantity) {
+                return res.status(400).json({ message: `Insufficient stock for ${product.name}` });
+            }
+            orderItems.push({
+                productId: product._id,
+                name: product.name,
+                image: product.images[0]?.url, // Use nullish coalescing for safety
+                price: product.price,
+                quantity: item.quantity,
+            });
+            // Decrement stock
+            product.stock -= item.quantity;
+            await product.save();
+        }
+        // --- END RESTORED BLOCK ---
 
-      if (product.stock < item.quantity) {
-        return res.status(400).json({ error: `Insufficient stock for product ${product.name}` });
-      }
 
-      const itemTotal = product.price * item.quantity;
-      totalAmount += itemTotal;
+        // --- NEW: Format Billing Details to match schema (as discussed) ---
+        const formattedBillingDetails = {
+            name: billingDetails.fullname,
+            email: billingDetails.email,
+            phone: billingDetails.phone,
+            address: {
+                street: billingDetails.address,
+                city: billingDetails.city,
+                state: billingDetails.state,
+                zipCode: billingDetails.pincode,
+                country: billingDetails.country || 'India' // Still defaulting if not provided
+            },
+            // Add alternatePhone here IF your billingDetailsSchema has it.
+            // If your schema does NOT have it directly, this line won't help.
+            // Assuming you've added it to the schema:
+            alternatePhone: billingDetails.alternatePhone || ''
+        };
 
-      orderItems.push({
-        productId: product._id,
-        quantity: item.quantity,
-        price: product.price,
-        name: product.name,
-        image: product.images[0]?.url || ''
-      });
+        // --- NEW: Handle Shipping Address (as discussed) ---
+        const finalShippingAddress = {
+            street: billingDetails.address, // Copy from billing for now
+            city: billingDetails.city,
+            state: billingDetails.state,
+            zipCode: billingDetails.pincode,
+            country: 'India'
+        };
+
+        const paymentStatus = 'succeeded'; // Or 'pending' for UPI/Net Banking redirects
+
+        // 3. Create the Order
+        const order = new Order({
+            userId: req.user._id,
+            billingDetails: formattedBillingDetails, // Use the formatted object
+            shippingAddress: finalShippingAddress, // Assign the formatted shipping address
+            items: orderItems, // <--- Now orderItems is defined!
+            totalAmount,
+            paymentMethod,
+            paymentInfo,
+            taxAmount,
+            shippingCost,
+            discountAmount,
+            status: paymentStatus === 'succeeded' ? 'processing' : 'pending',
+            paidAt: paymentStatus === 'succeeded' ? Date.now() : null,
+        });
+
+        const createdOrder = await order.save();
+
+        // 4. Send Confirmation Email (asynchronous)
+        // sendOrderConfirmationEmail(req.user.email, createdOrder);
+
+        res.status(201).json({
+            message: 'Order placed successfully!',
+            orderId: createdOrder._id,
+            redirectUrl: '/order-confirmation?orderId=' + createdOrder._id
+        });
+
+    } catch (error) {
+        console.error("Order placement error:", error);
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ message: error.message, errors: error.errors });
+        }
+        res.status(500).json({ message: error.message || 'Server Error' });
     }
+});
 
-    // Create order
-    const order = new Order({
-      userId: req.user._id,
-      items: orderItems,
-      totalAmount,
-      paymentMethod,
-      billingDetails,
-      shippingAddress
-    });
+// NEW ROUTE TO ADD: GET Order by ID
+// GET /api/orders/:orderId
+router.get('/:orderId', authenticateUser, async (req, res) => {
+    try {
+        const orderId = req.params.orderId;
 
-    await order.save();
+        // Validate if orderId is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(orderId)) {
+            return res.status(400).json({ message: 'Invalid order ID format.' });
+        }
 
-    // Update product stock
-    for (const item of items) {
-      await Product.findByIdAndUpdate(
-        item.productId,
-        { $inc: { stock: -item.quantity } }
-      );
+        // Find the order by ID and ensure it belongs to the authenticated user
+        const order = await Order.findOne({ _id: orderId, userId: req.user._id })
+                                  .populate('userId', 'name email') // Populate user details
+                                  .populate({
+                                      path: 'items.productId', // Populate product details within the items array
+                                      select: 'name images price' // Select specific fields to return
+                                  });
+
+      console.log(order)
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found or you do not have permission to view it.' });
+        }
+
+        res.status(200).json({ order });
+
+    } catch (error) {
+        console.error("Error fetching order details:", error);
+        res.status(500).json({ message: error.message || 'Server Error' });
     }
-
-    const populatedOrder = await Order.findById(order._id)
-      .populate('userId', 'name email')
-      .populate('items.productId', 'name images price');
-
-    res.status(201).json({
-      message: 'Order created successfully',
-      order: populatedOrder
-    });
-  } catch (error) {
-    console.error('Create order error:', error);
-    res.status(500).json({ error: 'Server error while creating order' });
-  }
 });
 
 // Update order status (Admin only)

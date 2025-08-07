@@ -40,7 +40,8 @@ export const useUsers = ({ page = 1, search = '' }) => {
     };
 
     fetchUsers();
-  }, [currentPage, search, refetchIndex]);
+  }, [currentPage, search, refetchIndex,getAuthHeaders]);
+
 
   const refetch = () => setRefetchIndex((i) => i + 1);
 

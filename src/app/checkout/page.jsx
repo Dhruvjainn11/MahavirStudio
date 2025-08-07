@@ -3,7 +3,7 @@
 import React from "react";
 import { useCart } from "../context/cartContext";
 import { useAuth } from "../context/authContext";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react"; // Import useEffect
 import { useRouter } from "next/navigation";
 import { useToast } from "../components/Toast";
 import Image from "next/image";
@@ -26,7 +26,7 @@ import {
   FiShoppingBag
 } from "react-icons/fi";
 
-// Step Indicator Component
+// Step Indicator Component (No changes needed)
 function StepIndicator({ step, currentStep, icon, label, isCompleted }) {
   const isActive = currentStep === step;
   const isPast = currentStep > step;
@@ -52,7 +52,7 @@ function StepIndicator({ step, currentStep, icon, label, isCompleted }) {
   );
 }
 
-// Input Field Component
+// Input Field Component (No changes needed)
 function InputField({ 
   label, 
   name, 
@@ -107,7 +107,7 @@ function InputField({
   );
 }
 
-// Payment Option Component
+// Payment Option Component (No changes needed)
 function PaymentOption({ id, name, value, checked, onChange, icon, label, description }) {
   return (
     <label
@@ -153,17 +153,20 @@ function PaymentOption({ id, name, value, checked, onChange, icon, label, descri
 }
 
 export default function CheckoutPage() {
-  const { cartItems, clearCart } = useCart();
-  const { user, isAuthenticated } = useAuth();
+  const { cartItems, clearCart , cart } = useCart();
+  const { user, isAuthenticated , token } = useAuth(); // Access user and isAuthenticated
   const { success, error } = useToast();
   const router = useRouter();
+  // console.log("CheckoutPage - cartItems:", cartItems , "cart:", cart);
+  console.log(user);
+  
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   
   const [billingForm, setBillingForm] = useState({
-    firstName: "",
-    lastName: "",
+    fullname: "",
+    
     email: "",
     phone: "",
     address: "",
@@ -183,10 +186,38 @@ export default function CheckoutPage() {
   
   const [errors, setErrors] = useState({});
   
+  // Effect to pre-fill billing form if user is authenticated and has addresses
+  useEffect(() => {
+    if (isAuthenticated && user?.addresses && user.addresses.length > 0) {
+      // Assuming you want to pre-fill with the first address or a default one
+      const defaultAddress = user.addresses[0]; 
+      setBillingForm(prev => ({
+        ...prev,
+        fullname: defaultAddress.name|| "",
+        
+        email: user.email || "", // Assuming user email is available in auth context
+        phone: defaultAddress.phone || "",
+        address: defaultAddress.address || "",
+        city: defaultAddress.city || "",
+        state: defaultAddress.state || "",
+        pincode: defaultAddress.pincode || "",
+        alternatePhone: defaultAddress.alternatePhone || ""
+      }));
+      success("Billing details pre-filled from your saved address!");
+    } else if (isAuthenticated && user?.email) {
+      // If no addresses, at least pre-fill email and maybe phone if available
+      setBillingForm(prev => ({
+        ...prev,
+        email: user.email,
+        phone: user.phone || "" // Assuming user phone might be available
+      }));
+    }
+  }, [isAuthenticated, user, success]); // Depend on isAuthenticated and user object
+
   const calculations = useMemo(() => {
     const subtotal = cartItems.reduce(
       (acc, item) => {
-        const price = parseInt(item.price.replace(/[₹,]/g, ""));
+        const price = parseInt(item.productId.price);
         return acc + (item.quantity * price);
       },
       0
@@ -213,20 +244,7 @@ export default function CheckoutPage() {
     const { name, value } = e.target;
     let formattedValue = value;
     
-// Select existing address
-const selectAddress = (address) => {
-  setBillingForm({
-    ...billingForm,
-    firstName: address.fullName,
-    address: address.address,
-    city: address.city,
-    state: address.state,
-    pincode: address.pincode
-  });
-  success("Address selected");
-};
-
-// Format card number
+    // Format card number
     if (name === "cardNumber") {
       formattedValue = value.replace(/\s/g, "").replace(/(\d{4})(?=\d)/g, "$1 ").trim();
       if (formattedValue.length > 19) return;
@@ -251,8 +269,7 @@ const selectAddress = (address) => {
     const newErrors = {};
     
     if (step === 1) {
-      if (!billingForm.firstName.trim()) newErrors.firstName = "First name is required";
-      if (!billingForm.lastName.trim()) newErrors.lastName = "Last name is required";
+      if (!billingForm.fullname.trim()) newErrors.fullname = "First name is required";
       if (!billingForm.email.trim()) newErrors.email = "Email is required";
       else if (!/\S+@\S+\.\S+/.test(billingForm.email)) newErrors.email = "Email is invalid";
       if (!billingForm.phone.trim()) newErrors.phone = "Phone number is required";
@@ -286,26 +303,76 @@ const selectAddress = (address) => {
     setCurrentStep(prev => prev - 1);
   };
 
-  const handlePlaceOrder = async () => {
+  // In CheckoutPage component
+const handlePlaceOrder = async () => {
     if (!validateStep(2)) return;
-    
+
     setIsLoading(true);
-    
+
+    const orderData = {
+        billingDetails: {
+            // Change these to fullname if your backend only expects fullname
+            // Or, ideally, update your backend to accept fullname/lastName if that's what your UI uses.
+            // For now, let's assume you want to concatenate them for the backend's 'fullname'.
+            // If lastName is truly optional, handle it:
+            fullname: billingForm.fullname, // Combine for backend
+            email: billingForm.email,
+            phone: billingForm.phone,
+            address: billingForm.address,
+            city: billingForm.city,
+            state: billingForm.state,
+            pincode: billingForm.pincode,
+            alternatePhone: billingForm.alternatePhone,
+        },
+        paymentMethod,
+        paymentInfo: paymentMethod === "card" ? {
+            cardNumberLast4: cardForm.cardNumber.slice(-4),
+            cardholderName: cardForm.cardholderName
+        } : {},
+        // IMPORTANT: Change cartItems to 'items' to match backend validation
+        items: cartItems.map(item => ({
+            _id: item.productId._id, // IMPORTANT: Change productId to _id to match backend validation
+            quantity: item.quantity,
+            price: parseInt(item.productId.price),
+            // Optionally, add name and image here if your backend order item schema also stores them directly
+            name: item.productId.name,
+            image: item.productId.images[0]?.url, // Add nullish coalescing for safety
+        })),
+        totalAmount: calculations.total,
+        subtotal: calculations.subtotal,
+        shippingCost: calculations.shipping,
+        taxAmount: calculations.tax,
+        discountAmount: calculations.discount,
+    };
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      console.log("Order Placed ✅", { billingForm, paymentMethod, cardForm, cartItems, total: calculations.total });
-      
-      success("Order placed successfully! You will receive a confirmation email shortly.");
-      clearCart();
-      router.push("/order-confirmation");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`, // Using `user.token` from `useAuth` context
+            },
+            body: JSON.stringify(orderData),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            // Log the actual error message from the backend for better debugging
+            console.error("Backend error response:", data);
+            throw new Error(data.message || 'Failed to place order.');
+        }
+
+        success("Order placed successfully! You will receive a confirmation email shortly.");
+        clearCart();
+        router.push(`/order-confirmation?orderId=${data.orderId}`);
     } catch (err) {
-      error("Failed to place order. Please try again.");
+        console.error("Frontend order placement error:", err);
+        error(err.message || "Failed to place order. Please try again.");
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   // Redirect if cart is empty
   if (cartItems.length === 0) {
@@ -347,7 +414,7 @@ const selectAddress = (address) => {
       {/* Progress Steps */}
       <div className="mb-6 md:mb-10">
         <div className="flex items-center justify-center overflow-x-auto px-4">
-          <div className="flex items-center  md:space-x-8">
+          <div className="flex items-center md:space-x-8">
             <StepIndicator
               step={1}
               currentStep={currentStep}
@@ -392,24 +459,60 @@ const selectAddress = (address) => {
                   Billing Details
                 </h2>
                 
+                {/* Address Selection - Added this section */}
+                {isAuthenticated && user?.addresses && user.addresses.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-medium text-charcoal-700 mb-3">Your Saved Addresses:</h3>
+                    <div className="space-y-3">
+                      {user.addresses.map((addr, index) => (
+                        <div 
+                          key={index} 
+                          className="flex items-center justify-between p-3 border border-beige-200 rounded-lg bg-beige-50 hover:bg-beige-100 transition-colors cursor-pointer"
+                          onClick={() => {
+                            setBillingForm({
+                              fullname: addr.fullname|| "",
+                              email: user.email || "", // Assuming email is on user root
+                              phone: addr.phone || "",
+                              address: addr.address || "",
+                              city: addr.city || "",
+                              state: addr.state || "",
+                              pincode: addr.pincode || "",
+                              alternatePhone: addr.alternatePhone || ""
+                            });
+                            success("Address selected!");
+                          }}
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-charcoal-800">{addr.fullname}</p>
+                            <p className="text-xs text-charcoal-600">{addr.address}, {addr.city}, {addr.state} - {addr.pincode}</p>
+                            <p className="text-xs text-charcoal-600">Ph: {addr.phone}</p>
+                          </div>
+                          <FiEdit3 className="text-gold-600 hover:text-gold-700" size={16} />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-t border-beige-200 my-6"></div> {/* Separator */}
+                  </div>
+                )}
+
                 <form className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InputField
                       label="First Name"
-                      name="firstName"
-                      value={billingForm.firstName}
+                      name="fullname"
+                      value={billingForm.fullname}
                       onChange={handleBillingChange}
-                      error={errors.firstName}
+                      error={errors.fullname}
                       icon={<FiUser />}
                     />
-                    <InputField
+                    {/* <InputField
                       label="Last Name"
                       name="lastName"
                       value={billingForm.lastName}
                       onChange={handleBillingChange}
                       error={errors.lastName}
                       icon={<FiUser />}
-                    />
+                    /> */}
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -616,7 +719,7 @@ const selectAddress = (address) => {
                   >
                     {isLoading ? (
                       <>
-                        <div className="animate-spin rounded-full  h-4 w-4 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                         Processing...
                       </>
                     ) : (
@@ -632,7 +735,7 @@ const selectAddress = (address) => {
           </AnimatePresence>
         </div>
 
-        {/* Right Side - Order Summary */}
+        {/* Right Side - Order Summary (No changes needed) */}
         <div className="lg:col-span-1 order-first lg:order-last">
           <div className="bg-white p-4 md:p-6 rounded-lg border border-beige-200 shadow-sm lg:sticky lg:top-8">
             <h3 className="text-base md:text-lg font-semibold text-charcoal-800 mb-3 md:mb-4 flex items-center gap-2">
@@ -643,24 +746,25 @@ const selectAddress = (address) => {
             {/* Items List */}
             <div className="space-y-2 md:space-y-3 mb-4 md:mb-6">
               {cartItems.map((item, index) => {
-                const itemPrice = parseInt(item.price.replace(/[₹,]/g, ""));
-                const itemTotal = itemPrice * item.quantity;
+                const itemPrice = parseInt(item.productId.price);
+                // Corrected: item.quantity should be used here as well for line item total
+                const itemTotal = itemPrice * item.quantity; 
                 return (
                   <div key={index} className="flex items-center gap-2 md:gap-3">
                     <div className="w-10 h-10 md:w-12 md:h-12 relative flex-shrink-0">
                       <Image
-                        src={item.image}
-                        alt={item.name}
+                        src={item.productId.images[0].url}
+                        alt={item.productId.name}
                         fill
                         className="object-cover rounded"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-xs md:text-sm font-medium text-charcoal-800 truncate">{item.name}</h4>
+                      <h4 className="text-xs md:text-sm font-medium text-charcoal-800 truncate">{item.productId.name}</h4>
                       <p className="text-xs text-charcoal-500">Qty: {item.quantity}</p>
                     </div>
                     <span className="text-xs md:text-sm font-medium text-gold-600 whitespace-nowrap">
-                      ₹{itemTotal.toLocaleString()}
+                      ₹{itemPrice.toLocaleString()} {/* Display individual item price, not itemTotal here */}
                     </span>
                   </div>
                 );

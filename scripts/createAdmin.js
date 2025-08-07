@@ -1,53 +1,76 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
-require('dotenv').config();
+require('dotenv').config(); // Ensure dotenv is loaded for standalone script execution
 
 async function createAdmin() {
   try {
-    // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI);
+    // 1. Connect to MongoDB
+    await mongoose.connect(process.env.MONGODB_URI, {
+      // Add recommended options for new Mongoose versions
+      // useNewUrlParser: true, // Deprecated in newer Mongoose
+      // useUnifiedTopology: true // Deprecated in newer Mongoose
+    });
+    console.log('✅ Connected to MongoDB');
 
-    console.log('Connected to MongoDB');
-
-    // Check if admin already exists
-    const existingAdmin = await User.findOne({ 
-      email: 'admin@mahavirstudio.com',
-      isAdmin: true 
+    // 2. Check if admin already exists
+    const adminEmail = 'admin@mahavirstudio.com';
+    const existingAdmin = await User.findOne({
+      email: adminEmail,
+      isAdmin: true
     });
 
     if (existingAdmin) {
-      console.log('Admin user already exists!');
-      console.log('Email:', existingAdmin.email);
-      console.log('Admin ID:', existingAdmin._id);
-      process.exit(0);
+      console.log('⚠️  Admin user already exists!');
+      console.log('📧 Email:', existingAdmin.email);
+      console.log('🆔 Admin ID:', existingAdmin._id);
+      return; // Use return instead of process.exit() here to allow finally block to execute
     }
 
-    // Create admin user
+    // 3. Define the default password (IMPROVEMENT: Use ENV variable)
+    const defaultAdminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
+    if (defaultAdminPassword === 'admin123') {
+        console.warn('🚨 WARNING: Using default hardcoded password "admin123". STRONGLY recommend setting DEFAULT_ADMIN_PASSWORD in your .env file!');
+    }
+
+
+    // 4. Create admin user
     const adminUser = new User({
       name: 'Administrator',
-      email: 'admin@mahavirstudio.com',
-      password: 'admin123', // Will be hashed automatically by the pre-save hook
+      email: adminEmail,
+      password: defaultAdminPassword, // Use the (preferably ENV) password
       isAdmin: true,
       isActive: true,
-      emailVerified: true
+      emailVerified: true // Good to have this true for an admin
     });
 
     await adminUser.save();
 
     console.log('✅ Admin user created successfully!');
-    console.log('📧 Email: admin@mahavirstudio.com');
-    console.log('🔑 Password: admin123');
+    console.log('📧 Email:', adminUser.email);
+    console.log('🔑 Password:', defaultAdminPassword); // Display the actual password used
     console.log('🆔 Admin ID:', adminUser._id);
-    console.log('');
-    console.log('⚠️  Please change the password after first login!');
-    console.log('');
+    console.log('\n');
+    console.log('--- IMPORTANT ---');
+    console.log('⚠️  If using a default password, please change it immediately after first login!');
     console.log('🚀 You can now login to the admin panel at:');
-    console.log('POST /api/admin/auth/login');
+    console.log('   POST /api/admin/auth/login');
+    console.log('-----------------\n');
 
-    process.exit(0);
   } catch (error) {
     console.error('❌ Error creating admin user:', error);
-    process.exit(1);
+    console.error('Error details:', error.message); // Log error message for clarity
+    // Consider adding specific error handling for duplicate key if email is also unique for all users
+    // if (error.code === 11000 && error.keyPattern && error.keyPattern.email) {
+    //   console.error('An account with this email already exists.');
+    // }
+    process.exitCode = 1; // Set exit code for non-graceful exit
+  } finally {
+    // 5. Ensure Mongoose disconnects gracefully
+    if (mongoose.connection.readyState === 1) { // Check if connected before trying to disconnect
+      await mongoose.disconnect();
+      console.log('Disconnected from MongoDB');
+    }
+    process.exit(); // Exit process after connection is closed or error handled
   }
 }
 

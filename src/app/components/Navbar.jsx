@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useRef } from "react";
-import { useState } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FiShoppingCart, FiHeart, FiSearch, FiMenu, FiX, FiUser, FiLogOut } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
@@ -13,8 +12,10 @@ export default function Navbar({ onLoginClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  
+  const profileDropdownRef = useRef(null);
 
-  const { cartItems } = useCart();
+  const { cartQuantity } = useCart();
   const { user, logout, isAuthenticated } = useAuth();
 
   const firstName = user?.name?.split(' ')[0] || 'User';
@@ -22,12 +23,29 @@ export default function Navbar({ onLoginClick }) {
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Products", href: "/products" },
-    { name: "Paints", href: "/paints" },
-    { name: "Paint Studio", href: "/paint-studio" },
     { name: "Bundles", href: "/bundles" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    setIsProfileDropdownOpen(false); // Close desktop dropdown on logout
+    setIsMenuOpen(false); // Close mobile menu on logout
+  };
 
   return (
     <header className="w-full fixed top-0 z-50 bg-beige-50 backdrop-blur-sm border-b border-beige-200">
@@ -46,14 +64,14 @@ export default function Navbar({ onLoginClick }) {
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
             <ul className="flex gap-6">
-{navLinks.map((link) => (
+              {navLinks.map((link) => (
                 <li key={link.name}>
                   <motion.div whileHover={{ y: -2 }}>
-                     <Suspense fallback={<div>Loading...</div>}>
-                    <Link href={link.href} className="nav-link">
-                      {link.name}
-                    </Link>
-                     </Suspense>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <Link href={link.href} className="nav-link">
+                        {link.name}
+                      </Link>
+                    </Suspense>
                   </motion.div>
                 </li>
               ))}
@@ -61,28 +79,26 @@ export default function Navbar({ onLoginClick }) {
 
             {/* Icons */}
             <div className="flex items-center gap-5 ml-4">
-              
-              
               <motion.div whileHover={{ y: -2 }} >
-                <Link href="/wishlist" className=" text-charcoal-600 hover:text-gold-500 transition-colors duration-200 p-2 rounded-lg hover:bg-beige-100; ">
+                <Link href="/wishlist" className="text-charcoal-600 hover:text-gold-500 transition-colors duration-200 p-2 rounded-lg hover:bg-beige-100;">
                   <FiHeart size={18} />
                 </Link>
               </motion.div>
               
               <motion.div whileHover={{ y: -2 }}>
                 <Link href="/cart" className="relative text-charcoal-700 hover:text-charcoal-900">
-            <FiShoppingCart size={22} />
-            { cartItems.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-gold-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {cartItems.length}
-              </span>
-            )}
-          </Link>
+                  <FiShoppingCart size={22} />
+                  {cartQuantity > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-gold-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartQuantity}
+                    </span>
+                  )}
+                </Link>
               </motion.div>
               
               {/* User Profile / Login */}
               {isAuthenticated ? (
-                <div className="relative">
+                <div className="relative" ref={profileDropdownRef}>
                   <motion.button
                     whileHover={{ y: -2 }}
                     onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
@@ -112,24 +128,21 @@ export default function Navbar({ onLoginClick }) {
                           My Profile
                         </Link>
                         <Link
-                          href="/profile/orders"
+                          href="/profile?tab=orders"
                           className="block px-3 py-2 text-sm text-charcoal-700 hover:bg-beige-50 hover:text-gold-600"
                           onClick={() => setIsProfileDropdownOpen(false)}
                         >
                           Order History
                         </Link>
                         <Link
-                          href="/profile/addresses"
+                          href="/profile?tab=addresses"
                           className="block px-3 py-2 text-sm text-charcoal-700 hover:bg-beige-50 hover:text-gold-600"
                           onClick={() => setIsProfileDropdownOpen(false)}
                         >
                           Addresses
                         </Link>
                         <button
-                          onClick={() => {
-                            logout();
-                            setIsProfileDropdownOpen(false);
-                          }}
+                          onClick={handleLogout}
                           className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                         >
                           <FiLogOut size={14} />
@@ -164,14 +177,14 @@ export default function Navbar({ onLoginClick }) {
 
           {/* Mobile Hamburger */}
           <div className="lg:hidden flex items-center gap-4">
-          <Link href="/cart" className="relative text-charcoal-700 hover:text-charcoal-900">
-            <FiShoppingCart size={22} />
-            { cartItems.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-gold-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {cartItems.length}
-              </span>
-            )}
-          </Link>
+            <Link href="/cart" className="relative text-charcoal-700 hover:text-charcoal-900">
+              <FiShoppingCart size={22} />
+              {cartQuantity > 0 && (
+                <span className="absolute -top-2 -right-2 bg-gold-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {cartQuantity}
+                </span>
+              )}
+            </Link>
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)} 
               className="text-charcoal-600 focus:outline-none"
@@ -221,48 +234,80 @@ export default function Navbar({ onLoginClick }) {
                 </Link>
               </motion.li>
             ))}
-            <div className="flex items-center gap-4 pt-2">
-  <Link 
-    href="/wishlist" 
-    className="icon-button" 
-    onClick={() => setIsMenuOpen(false)}
-  >
-    <FiHeart size={18} />
-  </Link>
+            
+            {/* Mobile Profile & Logout Links */}
+            {isAuthenticated && (
+              <>
+                <li className="border-t border-beige-200 mt-2 pt-2">
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 py-2 text-charcoal-700 hover:text-gold-500 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <FiUser size={18} /> My Profile
+                  </Link>
+                </li>
+                <li className="">
+                  <Link
+                    href="/profile?tab=orders"
+                    className="flex items-center gap-2 py-2 text-charcoal-700 hover:text-gold-500 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <FiUser size={18} /> Order History
+                  </Link>
+                </li>
+                <li className="">
+                  <Link
+                    href="/profile?tab=addresses"
+                    className="flex items-center gap-2 py-2 text-charcoal-700 hover:text-gold-500 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <FiUser size={18} /> Addresses
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left flex items-center gap-2 py-2 text-red-600 hover:text-red-800 transition-colors"
+                  >
+                    <FiLogOut size={18} /> Logout
+                  </button>
+                </li>
+              </>
+            )}
 
-  {isAuthenticated ? (
-    <Link
-      href="/profile"
-      onClick={() => setIsMenuOpen(false)}
-      className="icon-button"
-      title="Profile"
-    >
-      <FiUser size={18} />
-    </Link>
-  ) : (
-    <button
-      onClick={() => {
-        setIsMenuOpen(false);
-        onLoginClick();
-      }}
-      className="icon-button"
-      title="Login"
-    >
-      <FiUser size={18} />
-    </button>
-  )}
+            {!isAuthenticated && (
+              <li>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onLoginClick();
+                  }}
+                  className="w-full text-left flex items-center gap-2 py-2 text-charcoal-700 hover:text-gold-500 transition-colors"
+                >
+                  <FiUser size={18} /> Login
+                </button>
+              </li>
+            )}
 
-  <a 
-    href="https://wa.me/yournumber" 
-    target="_blank" 
-    rel="noopener noreferrer"
-    className="whatsapp-button"
-    onClick={() => setIsMenuOpen(false)}
-  >
-    <FaWhatsapp size={16} />
-  </a>
-</div>
-
+            <div className="flex items-center gap-4 pt-2 border-t border-beige-200">
+              <Link 
+                href="/wishlist" 
+                className="icon-button" 
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <FiHeart size={18} />
+              </Link>
+              <a 
+                href="https://wa.me/yournumber" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="whatsapp-button"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <FaWhatsapp size={16} />
+              </a>
+            </div>
           </ul>
         </motion.div>
       )}

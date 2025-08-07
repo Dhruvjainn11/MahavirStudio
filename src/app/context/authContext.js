@@ -11,12 +11,15 @@ export function AuthProvider({ children }) {
   const [address, setAddress] = useState(null)
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const [token, setToken] = useState(null);
 
 // Add this to your auth context to debug
 
 
   useEffect(() => {
     initializeAuth();
+    const token = getToken();
+    setToken(token);
    
     const storedUser = localStorage.getItem("mahavir_user");
     if (storedUser) {
@@ -362,6 +365,7 @@ const cancelOrder = async (orderId) => {
   return (
     <AuthContext.Provider value={{
       user,
+      token,
       isLoading,
       isAuthenticated: !!user,
       login,

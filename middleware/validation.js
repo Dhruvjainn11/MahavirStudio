@@ -46,13 +46,27 @@ const validateCategory = [
 
 // Order validation rules
 const validateOrder = [
-  body('items').isArray({ min: 1 }).withMessage('Order must contain at least one item'),
-  body('items.*.productId').isMongoId().withMessage('Invalid product ID'),
-  body('items.*.quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
-  body('paymentMethod').isIn(['credit_card', 'debit_card', 'paypal', 'cod', 'upi']).withMessage('Invalid payment method'),
-  body('billingDetails.name').trim().isLength({ min: 2 }).withMessage('Billing name is required'),
-  body('billingDetails.email').isEmail().withMessage('Valid billing email is required'),
-  handleValidationErrors
+    // Validate the top-level 'items' array
+    body('items').isArray({ min: 1 }).withMessage('Order must contain at least one item'),
+    // Validate fields within each 'item'
+    body('items.*._id').isMongoId().withMessage('Invalid product ID for an item'),
+    body('items.*.quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1 for an item'),
+
+    // Update payment method validation to include 'netbanking'
+    body('paymentMethod').isIn(['card', 'debit_card', 'paypal', 'cod', 'upi', 'netbanking']).withMessage('Invalid payment method'),
+
+    // Update billingDetails validation
+    // If you always combine firstName and lastName on frontend to send as 'fullname',
+    // then this validation is fine as is, but consider if backend should store them separately.
+    body('billingDetails.fullname').trim().isLength({ min: 2 }).withMessage('Billing full name is required'),
+    body('billingDetails.email').isEmail().withMessage('Valid billing email is required'),
+    body('billingDetails.phone').trim().isLength({ min: 10, max: 10 }).withMessage('Valid 10-digit phone number is required'), // Added phone validation
+    body('billingDetails.address').trim().notEmpty().withMessage('Address is required'),
+    body('billingDetails.city').trim().notEmpty().withMessage('City is required'),
+    body('billingDetails.state').trim().notEmpty().withMessage('State is required'),
+    body('billingDetails.pincode').trim().isLength({ min: 6, max: 6 }).withMessage('Valid 6-digit pincode is required'),
+
+    handleValidationErrors // Your custom error handler
 ];
 
 // Review validation rules
