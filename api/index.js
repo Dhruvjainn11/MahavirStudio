@@ -3,7 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const connectDB = require('./lib/database');
+const connectDB = require('../lib/database');
 const dotenv = require('dotenv');
 
 const app = express();
@@ -15,7 +15,7 @@ connectDB();
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] 
+    ? ['https://mahavir-studio.vercel.app'] 
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
@@ -39,18 +39,18 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('combined'));
 
 // Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/products', require('./routes/products'));
-app.use('/api/paints', require('./routes/paints'));
-app.use('/api/categories', require('./routes/categories'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/orders', require('./routes/orders'));
-app.use('/api/reviews', require('./routes/reviews'));
-app.use('/api/cart', require('./routes/cart'));
-app.use('/api/wishlist', require('./routes/wishlist'));
+app.use('/api/auth', require('../routes/auth'));
+app.use('/api/products', require('../routes/products'));
+app.use('/api/paints', require('../routes/paints'));
+app.use('/api/categories', require('../routes/categories'));
+app.use('/api/users', require('../routes/users'));
+app.use('/api/orders', require('../routes/orders'));
+app.use('/api/reviews', require('../routes/reviews'));
+app.use('/api/cart', require('../routes/cart'));
+app.use('/api/wishlist', require('../routes/wishlist'));
 
 // Admin Routes
-app.use('/api/admin', require('./routes/admin'));
+app.use('/api/admin', require('../routes/admin'));
 
 
 // Health check endpoint
