@@ -88,104 +88,106 @@ router.get('/user/:userId', authenticateUser, async (req, res) => {
 
 // Create new order
 // At the top of your router.post route, after destructuring req.body
-router.post('/', authenticateUser , validateOrder, async (req, res) => {
-    // Destructure all relevant fields from req.body
-    const { billingDetails, paymentMethod, paymentInfo, items: incomingItems, totalAmount, subtotal, shippingCost, taxAmount, discountAmount, shippingDetails } = req.body;
+router.post('/', authenticateUser, validateOrder, async (req, res) => {
+  // Destructure all relevant fields from req.body
+  const { 
+      billingDetails, 
+      paymentMethod, 
+      paymentInfo, // Contains payment gateway response (e.g., status)
+      items: incomingItems, 
+      totalAmount, 
+      subtotal, 
+      shippingCost, 
+      taxAmount, 
+      discountAmount, 
+      shippingDetails 
+  } = req.body;
 
-    console.log(req.body);
-    console.log("--- Debugging Order Placement ---");
-    console.log("Incoming billingDetails:", billingDetails);
-    console.log("Incoming shippingDetails (if any):", shippingDetails);
-    // ... rest of your initial logs
+  try {
+      // Step 1: Check product stock and build order items array
+      let orderItems = [];
+      for (let item of incomingItems) {
+          const product = await Product.findById(item._id);
+          if (!product) {
+              return res.status(404).json({ message: `Product not found: ${item._id}` });
+          }
+          if (product.stock < item.quantity) {
+              return res.status(400).json({ message: `Insufficient stock for ${product.name}` });
+          }
+          orderItems.push({
+              productId: product._id,
+              name: product.name,
+              image: product.images[0]?.url,
+              price: product.price,
+              quantity: item.quantity,
+          });
+          // Decrement stock immediately to prevent overselling
+          product.stock -= item.quantity;
+          await product.save();
+      }
 
-    try {
-        // --- RESTORE THIS BLOCK: Product stock check and orderItems array building ---
-        let orderItems = []; // <-- Make sure this line exists!
-        for (let item of incomingItems) {
-            const product = await Product.findById(item._id);
-            if (!product) {
-                return res.status(404).json({ message: `Product not found: ${item._id}` });
-            }
-            if (product.stock < item.quantity) {
-                return res.status(400).json({ message: `Insufficient stock for ${product.name}` });
-            }
-            orderItems.push({
-                productId: product._id,
-                name: product.name,
-                image: product.images[0]?.url, // Use nullish coalescing for safety
-                price: product.price,
-                quantity: item.quantity,
-            });
-            // Decrement stock
-            product.stock -= item.quantity;
-            await product.save();
-        }
-        // --- END RESTORED BLOCK ---
+      // Step 2: Format billing and shipping details
+      const formattedBillingDetails = {
+          name: billingDetails.fullname,
+          email: billingDetails.email,
+          phone: billingDetails.phone,
+          address: {
+              street: billingDetails.address,
+              city: billingDetails.city,
+              state: billingDetails.state,
+              zipCode: billingDetails.pincode,
+              country: billingDetails.country || 'India'
+          }
+      };
 
+      const finalShippingAddress = {
+          street: shippingDetails?.address || billingDetails.address,
+          city: shippingDetails?.city || billingDetails.city,
+          state: shippingDetails?.state || billingDetails.state,
+          zipCode: shippingDetails?.pincode || billingDetails.pincode,
+          country: shippingDetails?.country || 'India'
+      };
 
-        // --- NEW: Format Billing Details to match schema (as discussed) ---
-        const formattedBillingDetails = {
-            name: billingDetails.fullname,
-            email: billingDetails.email,
-            phone: billingDetails.phone,
-            address: {
-                street: billingDetails.address,
-                city: billingDetails.city,
-                state: billingDetails.state,
-                zipCode: billingDetails.pincode,
-                country: billingDetails.country || 'India' // Still defaulting if not provided
-            },
-            // Add alternatePhone here IF your billingDetailsSchema has it.
-            // If your schema does NOT have it directly, this line won't help.
-            // Assuming you've added it to the schema:
-            alternatePhone: billingDetails.alternatePhone || ''
-        };
+      // Step 3: Determine payment and order status
+      // For now, this is a mock. In a real scenario, this would come from the paymentInfo object
+      // received from your payment gateway's webhook or success response.
+      const actualPaymentStatus = paymentInfo?.status || 'pending';
+      const orderStatus = actualPaymentStatus === 'paid' ? 'processing' : 'pending';
 
-        // --- NEW: Handle Shipping Address (as discussed) ---
-        const finalShippingAddress = {
-            street: billingDetails.address, // Copy from billing for now
-            city: billingDetails.city,
-            state: billingDetails.state,
-            zipCode: billingDetails.pincode,
-            country: 'India'
-        };
+      // Step 4: Create and save the new order
+      const order = new Order({
+          userId: req.user._id,
+          billingDetails: formattedBillingDetails,
+          shippingAddress: finalShippingAddress,
+          items: orderItems,
+          totalAmount,
+          paymentMethod,
+          paymentInfo, // Pass the entire paymentInfo object
+          taxAmount,
+          shippingCost,
+          discountAmount,
+          status: orderStatus, // Assign the fulfillment status
+          paymentStatus: actualPaymentStatus, // Assign the payment status
+          paidAt: actualPaymentStatus === 'paid' ? Date.now() : null,
+      });
 
-        const paymentStatus = 'succeeded'; // Or 'pending' for UPI/Net Banking redirects
+      const createdOrder = await order.save();
 
-        // 3. Create the Order
-        const order = new Order({
-            userId: req.user._id,
-            billingDetails: formattedBillingDetails, // Use the formatted object
-            shippingAddress: finalShippingAddress, // Assign the formatted shipping address
-            items: orderItems, // <--- Now orderItems is defined!
-            totalAmount,
-            paymentMethod,
-            paymentInfo,
-            taxAmount,
-            shippingCost,
-            discountAmount,
-            status: paymentStatus === 'succeeded' ? 'processing' : 'pending',
-            paidAt: paymentStatus === 'succeeded' ? Date.now() : null,
-        });
+      // Step 5: Send a successful response
+      res.status(201).json({
+          message: 'Order placed successfully!',
+          orderId: createdOrder._id,
+          redirectUrl: '/order-confirmation?orderId=' + createdOrder._id
+      });
 
-        const createdOrder = await order.save();
-
-        // 4. Send Confirmation Email (asynchronous)
-        // sendOrderConfirmationEmail(req.user.email, createdOrder);
-
-        res.status(201).json({
-            message: 'Order placed successfully!',
-            orderId: createdOrder._id,
-            redirectUrl: '/order-confirmation?orderId=' + createdOrder._id
-        });
-
-    } catch (error) {
-        console.error("Order placement error:", error);
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ message: error.message, errors: error.errors });
-        }
-        res.status(500).json({ message: error.message || 'Server Error' });
-    }
+  } catch (error) {
+      console.error("Order placement error:", error);
+      // Add specific validation error handling if needed
+      if (error.name === 'ValidationError') {
+          return res.status(400).json({ message: error.message, errors: error.errors });
+      }
+      res.status(500).json({ message: 'Server Error', details: error.message });
+  }
 });
 
 // NEW ROUTE TO ADD: GET Order by ID

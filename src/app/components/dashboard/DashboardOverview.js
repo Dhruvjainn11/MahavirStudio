@@ -1,6 +1,7 @@
 'use client';
 
-import { FiUsers, FiPackage, FiShoppingCart, FiDollarSign, FiTag, FiDroplet } from 'react-icons/fi';
+import { FiUsers, FiPackage, FiShoppingCart, FiDollarSign, FiTag, FiDroplet, FiTrendingUp } from 'react-icons/fi';
+import { Fragment } from 'react';
 
 const DashboardOverview = ({ overview, thisMonth }) => {
   const cards = [
@@ -9,7 +10,7 @@ const DashboardOverview = ({ overview, thisMonth }) => {
       value: overview.totalUsers,
       icon: <FiUsers className="text-blue-500 text-xl" />,
       trend: thisMonth.userGrowth >= 0 ? 'up' : 'down',
-      trendValue: Math.abs(thisMonth.userGrowth)
+      trendValue: thisMonth.userGrowth
     },
     {
       label: 'Total Products',
@@ -22,14 +23,20 @@ const DashboardOverview = ({ overview, thisMonth }) => {
       value: overview.totalOrders,
       icon: <FiShoppingCart className="text-purple-500 text-xl" />,
       trend: thisMonth.orderGrowth >= 0 ? 'up' : 'down',
-      trendValue: Math.abs(thisMonth.orderGrowth)
+      trendValue: thisMonth.orderGrowth
     },
     {
       label: 'Total Revenue',
       value: `₹${overview.totalRevenue.toLocaleString()}`,
       icon: <FiDollarSign className="text-yellow-500 text-xl" />,
+      trend: 'neutral' // <--- Set this to 'neutral'
+    },
+    {
+      label: 'Revenue Growth', // <--- New card for revenue growth
+      value: `${Math.abs(thisMonth.revenueGrowth).toFixed(1)}%`,
+      icon: <FiTrendingUp className="text-yellow-500 text-xl" />,
       trend: thisMonth.revenueGrowth >= 0 ? 'up' : 'down',
-      trendValue: Math.abs(thisMonth.revenueGrowth)
+      trendValue: thisMonth.revenueGrowth
     },
     {
       label: 'Categories',
@@ -37,12 +44,7 @@ const DashboardOverview = ({ overview, thisMonth }) => {
       icon: <FiTag className="text-pink-500 text-xl" />,
       trend: 'neutral'
     },
-    {
-      label: 'Paints',
-      value: overview.totalPaints,
-      icon: <FiDroplet className="text-orange-500 text-xl" />,
-      trend: 'neutral'
-    }
+   
   ];
 
   return (
@@ -62,7 +64,7 @@ const DashboardOverview = ({ overview, thisMonth }) => {
             </div>
           </div>
           
-          {card.trend !== 'neutral' && (
+          {card.trend !== 'neutral' && card.trendValue !== null && card.trendValue !== undefined && (
             <div className="mt-3 flex items-center text-xs">
               <span className={`inline-flex items-center ${card.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
                 {card.trend === 'up' ? (
@@ -74,7 +76,8 @@ const DashboardOverview = ({ overview, thisMonth }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 )}
-                {card.trendValue}%
+                {/* Check if trendValue is a number before calling toFixed */}
+                {typeof card.trendValue === 'number' ? Math.abs(card.trendValue).toFixed(1) : ''}%
               </span>
               <span className="text-gray-500 ml-2">vs last month</span>
             </div>

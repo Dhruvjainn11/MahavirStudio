@@ -20,7 +20,7 @@ router.get('/', authenticateUser, async (req, res) => {
   try {
     // req.user.id should be available from the authenticateUser middleware
     const userId = req.user.id; 
-
+    console.log("userId", userId);
     // Populate product details for each item in the wishlist
     const wishlist = await Wishlist.findOne({ userId }).populate('items.productId');
     
@@ -29,7 +29,8 @@ router.get('/', authenticateUser, async (req, res) => {
       // This is a cleaner response than a 404 for an empty state.
       return res.status(200).json({ items: [] }); 
     }
-    res.json(wishlist);
+    res.json(wishlist.items);
+    console.log(wishlist)
   } catch (error) {
     console.error('Error fetching wishlist:', error);
     res.status(500).json({ message: 'Server error', details: error.message });
@@ -76,7 +77,7 @@ router.post('/', authenticateUser, async (req, res) => {
     // 5. Populate and Send Response
     // Populate to send back full product details for the updated wishlist
     await wishlist.populate('items.productId');
-    res.status(201).json(wishlist);
+    res.status(201).json(wishlist.items);
   } catch (error) {
     console.error('Error adding item to wishlist:', error);
     res.status(500).json({ message: 'Server error', details: error.message });
@@ -112,7 +113,7 @@ router.delete('/:itemId', authenticateUser, async (req, res) => {
     
     // Populate and Send Response
     await wishlist.populate('items.productId');
-    res.json(wishlist);
+    res.json(wishlist.items);
   } catch (error) {
     console.error('Error removing item from wishlist:', error);
     res.status(500).json({ message: 'Server error', details: error.message });

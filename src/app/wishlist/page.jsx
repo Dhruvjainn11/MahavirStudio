@@ -9,7 +9,7 @@ import { useWishlist } from '@/app/context/wishlistContext'; // Adjust path for 
 
 const WishlistPage = () => {
   const { wishlistItems, loading, error, removeFromWishlist } = useWishlist();
-
+  console.log(wishlistItems);
   // Handle loading state
   if (loading) {
     return (
@@ -32,7 +32,7 @@ const WishlistPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-15">
       <h1 className="text-3xl font-bold text-center mb-8">Your Wishlist</h1>
 
       {wishlistItems.length === 0 ? (
@@ -83,7 +83,7 @@ const WishlistPage = () => {
                 </div>
                 <div className="flex-grow text-center md:text-left">
                   <h3 className="text-lg font-semibold text-gray-800 mb-1">{product.name}</h3>
-                  <p className="text-gray-600 text-xl font-bold mb-2">${product.price?.toFixed(2)}</p>
+                  <p className="text-gray-600 text-xl font-bold mb-2">₹{product.price?.toFixed(2)}</p>
                   {product.availableColors && product.availableColors.length > 0 && (
                     <p className="text-gray-500 text-sm">Colors: {product.availableColors.join(', ')}</p>
                   )}

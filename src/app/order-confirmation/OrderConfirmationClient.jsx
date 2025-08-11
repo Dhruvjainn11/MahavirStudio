@@ -116,7 +116,7 @@ export default function OrderConfirmationClient() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-beige-50 text-charcoal-700 text-center p-4">
         <p className="mb-4">Unable to load order details. Please check your URL or try again later.</p>
-        <Link href="/profile/orders" className="px-4 py-2 bg-gold-500 text-white rounded-lg hover:bg-gold-600 transition-colors">
+        <Link href="/profile" className="px-4 py-2 bg-gold-500 text-white rounded-lg hover:bg-gold-600 transition-colors">
           View Order History
         </Link>
       </div>
@@ -395,7 +395,7 @@ export default function OrderConfirmationClient() {
           </Link>
 
           <Link
-            href="/profile/orders"
+            href="/profile"
             className="px-8 py-3 border border-beige-300 text-charcoal-700 rounded-lg hover:bg-beige-50 transition-colors font-medium text-center"
           >
             View Order History

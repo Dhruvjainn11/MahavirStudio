@@ -7,9 +7,12 @@ import {
 } from 'recharts';
 
 const formatLabel = (item, period) => {
-  if (period === 'daily') return `${item._id.day}/${item._id.month}`;
-  if (period === 'weekly') return `W${item._id.week}`;
-  return `${item._id.month}/${item._id.year}`;
+  // Add defensive checks for the properties
+  if (!item || !item._id) return ''; 
+  if (period === 'daily' && item._id.day && item._id.month) return `${item._id.day}/${item._id.month}`;
+  if (period === 'weekly' && item._id.week) return `W${item._id.week}`;
+  if (item._id.month && item._id.year) return `${item._id.month}/${item._id.year}`;
+  return ''; // Fallback for any unexpected data structure
 };
 
 const RevenueChart = () => {
@@ -25,12 +28,13 @@ const RevenueChart = () => {
       });
       if (!res.ok) throw new Error('Failed to fetch revenue data');
       return res.json();
-    }
+    },
   });
 
-  const revenueData = data?.data?.revenueData.map(item => ({
+  // Only process the data if it exists and is not loading or in an error state
+  const revenueData = data?.data?.revenueData?.map(item => ({
     ...item,
-    label: formatLabel(item._id, period)
+    label: formatLabel(item, period)
   }));
 
   return (

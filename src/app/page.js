@@ -103,13 +103,13 @@ export default function Home() {
           title: "Artisan Hardware",
           description: "Handcrafted fixtures for distinctive spaces.",
           image: "/assets/categories/hardware.jpg",
-          href: "/products?category=hardware",
+          href: "/products",
         },
         {
-          title: "Curated Paints",
-          description: "Premium finishes in designer palettes.",
-          image: "/assets/categories/paints.jpg",
-          href: "/paints",
+          title: "Curated Collections",
+          description: "Explore our styled hardware and bundles.",
+          image: "/assets/categories/collections.png", // Make sure this image exists or replace with your own
+          href: "/collections",
         },
         {
           title: "Room Bundles",
@@ -227,43 +227,7 @@ export default function Home() {
 
 
 
-{/* Explore Paint Studio and Hardware */}
-<section className="py-24 bg-white snap-start">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-      <div>
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="bg-beige-100 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center text-center"
-        >
-          <FiDroplet size={48} className="text-gold-500 mb-4" />
-          <h3 className="text-2xl font-serif text-charcoal-800 mb-4">
-            Interactive Paint Studio
-          </h3>
-          <p className="text-charcoal-600 mb-6">
-            Experience our palette customization and see how our colors can bring your spaces to life.
-          </p>
-          <button
-            onClick={() => goToStudio("interior")}
-            className="px-5 py-3 rounded-md bg-charcoal-800 text-white font-medium hover:bg-charcoal-700 transition"
-          >
-            Visit Paint Studio
-          </button>
-        </motion.div>
-      </div>
-      <div className="flex justify-center">
-        <Image
-          src="/models/Home.jpg"
-          alt="Paint Studio Preview"
-          width={480}
-          height={300}
-          className="rounded-lg shadow-lg"
-        />
-      </div>
-    </div>
-  </div>
-</section>
+
 
 
 

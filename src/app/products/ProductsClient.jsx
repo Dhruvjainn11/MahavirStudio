@@ -4,16 +4,15 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiShoppingCart, FiHeart, FiStar, FiFilter, FiGrid, FiList, FiX } from "react-icons/fi";
-import { FaHeart } from "react-icons/fa"; // For filled heart
-import { useState, useEffect, useMemo, useCallback } from "react"; // Added useCallback
+import { FaHeart } from "react-icons/fa";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useCart } from "../context/cartContext";
-import { useWishlist } from "../context/wishlistContext"; // Correct import
+import { useWishlist } from "../context/wishlistContext";
 import ProductFilters from "../components/ProductFilters";
 import { useToast } from "../components/Toast";
 import { ProductCardSkeleton } from "../components/LoadingSpinner";
 import { useClientProducts } from "@/app/hooks/useClientProducts";
-// import { add } from "date-fns"; // This import seems unused and can be removed
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
@@ -27,73 +26,61 @@ export default function ProductsPage() {
     maxPrice: ''
   });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [loading, setLoading] = useState(true); // Initial loading for page structure
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
 
   const { addToCart } = useCart();
-  // Destructure wishlist functions and items correctly
   const { wishlistItems, addToWishlist, removeFromWishlist, isProductInWishlist, loading: wishlistLoading } = useWishlist();
-  const toast = useToast(); // Destructure { success, error, info } from useToast if available
+  const toast = useToast();
 
-  const { data, isLoading: productsLoading } = useClientProducts(); // Loading state for product data fetch
+  const { data, isLoading: productsLoading } = useClientProducts();
 
-  // Simulate loading for better UX or combine with actual data loading
   useEffect(() => {
-    // If useClientProducts already handles loading, this might not be strictly necessary
-    // or can be used for initial UI mount effects.
     if (!productsLoading) {
-        setTimeout(() => setLoading(false), 300); // Small delay after products are fetched
+      setTimeout(() => setLoading(false), 300);
     } else {
-        setLoading(true);
+      setLoading(true);
     }
   }, [productsLoading]);
 
   const products = data?.products || [];
 
-  // Memoized filtered and sorted products
   const filteredProducts = useMemo(() => {
-    if (!products) return []; // Use the local products variable
+    if (!products) return [];
 
     let filtered = products.filter(product => {
-      // Category filter
       if (filters.category !== 'all' && product.category !== filters.category) {
         return false;
       }
 
-      // Subcategory filter
       if (filters.subcategory !== 'all' && product.subcategory !== filters.subcategory) {
         return false;
       }
 
-      // Finish filter
       if (filters.finish.length > 0 && !filters.finish.includes(product.finish)) {
         return false;
       }
 
-      // Brand filter
       if (filters.brand.length > 0 && !filters.brand.includes(product.brand)) {
         return false;
       }
 
-      // Price filter
       const price = typeof product.price === 'string'
-        ? parseFloat(product.price.replace(/[₹,]/g, '')) // Use parseFloat for prices
+        ? parseFloat(product.price.replace(/[₹,]/g, ''))
         : product.price;
 
-      if (filters.minPrice && price < parseFloat(filters.minPrice)) { // Use parseFloat
+      if (filters.minPrice && price < parseFloat(filters.minPrice)) {
         return false;
       }
-      if (filters.maxPrice && price > parseFloat(filters.maxPrice)) { // Use parseFloat
-        return false;
+      if (filters.maxPrice && price > parseFloat(filters.maxPrice)) {
         return false;
       }
 
       return true;
     });
 
-    // Sort products
     filtered.sort((a, b) => {
       const priceA = typeof a.price === 'string'
         ? parseFloat(a.price.replace(/[₹,]/g, ''))
@@ -113,8 +100,6 @@ export default function ProductsPage() {
         case 'price-desc':
           return priceB - priceA;
         case 'newest':
-          // Assuming product has a 'createdAt' field or similar for 'newest'
-          // If not, you might need to add it to your product schema or sort by ID
           return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
         default:
           return 0;
@@ -122,9 +107,8 @@ export default function ProductsPage() {
     });
 
     return filtered;
-  }, [products, filters]); // Depend on local 'products' variable
+  }, [products, filters]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * itemsPerPage,
@@ -136,7 +120,7 @@ export default function ProductsPage() {
       ...prev,
       [filterType]: value
     }));
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   };
 
   const clearAllFilters = () => {
@@ -173,28 +157,16 @@ export default function ProductsPage() {
     }
   };
 
-  // NEW: Optimized handleToggleWishlist logic
   const handleToggleWishlist = useCallback(async (productId) => {
-    // Check if the product is currently in the wishlist
-    const isInWishlist = isProductInWishlist(productId);
+    // FIX: Check the wishlistItems array directly to find the item
+    const itemInWishlist = wishlistItems.find(item => item.productId?._id === productId);
     
-    // If the product is in the wishlist, find its specific wishlist item ID
-    let wishlistItemId = null;
-    if (isInWishlist) {
-      const itemInWishlist = wishlistItems.find(item => item.productId?._id === productId);
-      if (itemInWishlist) {
-        wishlistItemId = itemInWishlist._id;
-      }
-    }
-
-    if (isInWishlist && wishlistItemId) {
-      // Remove from wishlist
-      await removeFromWishlist(wishlistItemId);
+    if (itemInWishlist) {
+      await removeFromWishlist(itemInWishlist._id);
     } else {
-      // Add to wishlist
       await addToWishlist(productId);
     }
-  }, [wishlistItems, isProductInWishlist, addToWishlist, removeFromWishlist]);
+  }, [wishlistItems, addToWishlist, removeFromWishlist]);
 
 
   const ProductCard = ({ item, index }) => {
@@ -217,7 +189,7 @@ export default function ProductsPage() {
             viewMode === 'list' ? 'h-24 w-24 mr-4 flex-shrink-0' : 'h-60 w-full mb-4'
           }`}>
             <Image
-              src={item.images[0]?.url || '/placeholder-image.jpg'} // Added optional chaining and fallback
+              src={item.images[0]?.url || '/placeholder-image.jpg'}
               alt={item.name}
               fill
               style={{ objectFit: 'cover' }}
@@ -281,21 +253,19 @@ export default function ProductsPage() {
             {item.stock ? "Add to Cart" : "Out of Stock"}
           </button>
 
-          {/* Corrected Wishlist Button Logic */}
           <button
             onClick={(e) => {
-              e.preventDefault(); // Prevent default link behavior if inside a link
-              handleToggleWishlist(item._id); // Use the new handler
+              e.preventDefault();
+              handleToggleWishlist(item._id);
             }}
-            disabled={wishlistLoading} // Disable if wishlist operations are in progress
+            disabled={wishlistLoading}
             className={`p-2 rounded-md transition-colors ${
-              isInWishlist
-                ? "bg-gold-100 text-gold-600" // Styled for in wishlist
-                : "bg-beige-100 text-charcoal-800 hover:bg-beige-200" // Styled for not in wishlist
+              wishlistLoading ? 'bg-gray-200 text-gray-500 animate-pulse' :
+              isInWishlist ? 'bg-gold-100 text-gold-600' : 'bg-beige-100 text-charcoal-800 hover:bg-beige-200'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
             aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
           >
-            {isInWishlist ? <FaHeart /> : <FiHeart />}
+            {wishlistLoading ? <FiHeart className="animate-spin" /> : (isInWishlist ? <FaHeart /> : <FiHeart />)}
           </button>
         </div>
       </motion.div>
@@ -342,7 +312,6 @@ export default function ProductsPage() {
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 mt-15">
-      {/* Enhanced Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -351,12 +320,10 @@ export default function ProductsPage() {
             </h1>
             <p className="text-charcoal-600">
               Showing {paginatedProducts.length} of {filteredProducts.length} products
-              {filteredProducts.length !== products.length && // Use local 'products' variable here
-                ` (${products.length || 0} total)`}
+              {filteredProducts.length !== products.length && ` (${products.length || 0} total)`}
             </p>
           </div>
 
-          {/* View Mode Toggle */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode('grid')}
@@ -381,7 +348,6 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Active Filters Indicator */}
         <AnimatePresence>
           {getActiveFiltersCount() > 0 && (
             <motion.div
@@ -403,7 +369,6 @@ export default function ProductsPage() {
         </AnimatePresence>
       </div>
 
-      {/* Mobile Filter Toggle */}
       <div className="md:hidden mb-6">
         <button
           onClick={() => setMobileFiltersOpen(true)}
@@ -420,28 +385,26 @@ export default function ProductsPage() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Enhanced Filters */}
         <ProductFilters
           filters={filters}
           onFilterChange={handleFilterChange}
           onClearFilters={clearAllFilters}
-          products={products} // Pass the raw products for filter options extraction
+          products={products}
           mobileOpen={mobileFiltersOpen}
           setMobileOpen={setMobileFiltersOpen}
         />
 
-        {/* Products Grid/List */}
         <div className="flex-1">
-          {(loading || productsLoading) ? ( // Combine both loading states
+          {(loading || productsLoading) ? (
             <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-6`}>
-              {Array(itemsPerPage).fill(0).map((_, index) => ( // Render skeletons for current page size
+              {Array(itemsPerPage).fill(0).map((_, index) => (
                 <ProductCardSkeleton key={index} />
               ))}
             </div>
           ) : paginatedProducts.length > 0 ? (
             <>
               <div
-              className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-6`}>
+                className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-6`}>
                 {paginatedProducts.map((item, index) => (
                   <ProductCard key={item._id || index} item={item} index={index} />
                 ))}

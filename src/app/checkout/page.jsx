@@ -193,7 +193,7 @@ export default function CheckoutPage() {
       const defaultAddress = user.addresses[0]; 
       setBillingForm(prev => ({
         ...prev,
-        fullname: defaultAddress.name|| "",
+        fullname: defaultAddress.fullname|| "",
         
         email: user.email || "", // Assuming user email is available in auth context
         phone: defaultAddress.phone || "",
